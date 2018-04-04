@@ -1,0 +1,3 @@
+apiVersion: vault.security.coreos.com/v1alpha1
+kind: VaultService
+projectName: vault-operator
