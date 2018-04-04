@@ -1,0 +1,25 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: vault-operator
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+
+---
+
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-vault-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: vault-operator
+  apiGroup: rbac.authorization.k8s.io
