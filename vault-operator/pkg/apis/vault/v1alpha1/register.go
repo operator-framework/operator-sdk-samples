@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	version   = "v1alpha1"
-	groupName = "vault.security.coreos.com"
+	version          = "v1alpha1"
+	groupName        = "vault.security.coreos.com"
+	VaultServiceKind = "VaultService"
 )
 
 var (
