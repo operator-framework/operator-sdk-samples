@@ -1,6 +1,5 @@
 package stub
 
-// reconcileVault reconciles the vault cluster's state to the spec specified by vr
 import (
 	"fmt"
 
@@ -19,6 +18,7 @@ const (
 	size = 3
 )
 
+// reconcileVault reconciles the vault cluster's state to the spec specified by vr
 // by preparing the TLS secrets, deploying the etcd and vault cluster,
 // and finally updating the vault deployment if needed.
 func reconcileVault(vr *api.VaultService) (err error) {
@@ -50,7 +50,7 @@ func reconcileVault(vr *api.VaultService) (err error) {
 		}
 	}
 
-	// TODO: deploy vault
+	// TODO: Deploy vault
 	return nil
 }
 
