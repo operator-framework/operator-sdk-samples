@@ -30,8 +30,10 @@ func reconcileVault(vr *api.VaultService) (err error) {
 	}
 	// After first time reconcile, phase will switch to "Running".
 	if vr.Status.Phase == api.ClusterPhaseInitial {
-		// TODO: gen etcd tls
-
+		err = prepareEtcdTLSSecrets(vr)
+		if err != nil {
+			return err
+		}
 		// etcd cluster should only be created in first time reconcile.
 		ec, err := deployEtcdCluster(vr)
 		if err != nil {
@@ -76,7 +78,15 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 		},
 		Spec: eopapi.ClusterSpec{
 			Size: size,
-			// TODO: add TLS
+			TLS: &eopapi.TLSPolicy{
+				Static: &eopapi.StaticTLS{
+					Member: &eopapi.MemberSecret{
+						PeerSecret:   etcdPeerTLSSecretName(v.Name),
+						ServerSecret: etcdServerTLSSecretName(v.Name),
+					},
+					OperatorSecret: etcdClientTLSSecretName(v.Name),
+				},
+			},
 			Pod: &eopapi.PodPolicy{
 				EtcdEnv: []v1.EnvVar{{
 					Name:  "ETCD_AUTO_COMPACTION_RETENTION",
