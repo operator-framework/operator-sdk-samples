@@ -3,14 +3,16 @@ package v1alpha1
 import (
 	sdkK8sutil "github.com/coreos/operator-sdk/pkg/util/k8sutil"
 
+	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
-	version   = "v1alpha1"
-	groupName = "vault.security.coreos.com"
+	version          = "v1alpha1"
+	groupName        = "vault.security.coreos.com"
+	VaultServiceKind = "VaultService"
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 
 func init() {
 	sdkK8sutil.AddToSDKScheme(AddToScheme)
+	// register etcd operator's scheme
+	sdkK8sutil.AddToSDKScheme(eopapi.AddToScheme)
 }
 
 // addKnownTypes adds the set of types defined in this package to the supplied scheme.

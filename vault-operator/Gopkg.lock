@@ -14,6 +14,12 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/coreos/etcd-operator"
+  packages = ["pkg/apis/etcd/v1beta2"]
+  revision = "daba74a707689f13ac3c93f44150d70f11f9b149"
+
+[[projects]]
   name = "github.com/coreos/operator-sdk"
   packages = [
     "pkg/k8sclient",
@@ -21,6 +27,7 @@
     "pkg/sdk/action",
     "pkg/sdk/handler",
     "pkg/sdk/informer",
+    "pkg/sdk/query",
     "pkg/sdk/types",
     "pkg/util/k8sutil",
     "version"
@@ -402,6 +409,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7a6c47e447284329c00e2dce5f4176303ba84ba3dfc4cafda708b39a5600ea83"
+  inputs-digest = "9efd7d6b4bf04e119a7a32d9d3d98d9a3e6f42a1d5b67ac7211295c72fffeddb"
   solver-name = "gps-cdcl"
   solver-version = 1

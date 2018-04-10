@@ -10,6 +10,11 @@
   name = "k8s.io/client-go"
   version = "kubernetes-1.9.3"
 
+[[override]]
+  # TODO: use version instead of branch
+  name = "github.com/coreos/etcd-operator"
+  branch = "master"
+
 [[constraint]]
   name = "github.com/coreos/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
