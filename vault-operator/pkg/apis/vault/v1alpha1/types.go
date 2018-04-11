@@ -51,8 +51,24 @@ func (v *VaultService) SetDefaults() bool {
 		vs.Version = defaultVersion
 		changed = true
 	}
-	// TODO set defaults to TLS.
+	if vs.TLS == nil {
+		vs.TLS = &TLSPolicy{Static: &StaticTLS{
+			ServerSecret: DefaultVaultServerTLSSecretName(v.Name),
+			ClientSecret: DefaultVaultClientTLSSecretName(v.Name),
+		}}
+		changed = true
+	}
 	return changed
+}
+
+// DefaultVaultClientTLSSecretName returns the name of the default vault client TLS secret
+func DefaultVaultClientTLSSecretName(vaultName string) string {
+	return vaultName + "-default-vault-client-tls"
+}
+
+// DefaultVaultServerTLSSecretName returns the name of the default vault server TLS secret
+func DefaultVaultServerTLSSecretName(vaultName string) string {
+	return vaultName + "-default-vault-server-tls"
 }
 
 type VaultServiceSpec struct {
@@ -76,7 +92,8 @@ type VaultServiceSpec struct {
 	// the "storage", "listener" sections in orignal config.
 	ConfigMapName string `json:"configMapName"`
 
-	// TODO: add TLS policy
+	// TLS policy of vault nodes
+	TLS *TLSPolicy `json:"TLS,omitempty"`
 }
 
 // PodPolicy defines the policy for pods owned by vault operator.
