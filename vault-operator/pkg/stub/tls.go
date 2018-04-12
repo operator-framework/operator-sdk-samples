@@ -20,6 +20,94 @@ var (
 	orgForTLSCert        = []string{"coreos.com"}
 )
 
+// prepareDefaultVaultTLSSecrets creates the default secrets for the vault server's TLS assets.
+// Currently we self-generate the CA, and use the self generated CA to sign all the TLS certs.
+func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("prepare default vault TLS secrets failed: %v", err)
+		}
+	}()
+
+	// if TLS spec doesn't exist or secrets doesn't exist, then we can go create secrets.
+	if api.IsTLSConfigured(vr.Spec.TLS) {
+		se := &v1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      vr.Spec.TLS.Static.ServerSecret,
+				Namespace: vr.Namespace,
+			},
+		}
+		err = query.Get(se)
+		if err == nil {
+			return nil
+		}
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	caKey, caCrt, err := newCACert()
+	if err != nil {
+		return err
+	}
+	se, err := newVaultServerTLSSecret(vr, caKey, caCrt)
+	if err != nil {
+		return err
+	}
+	addOwnerRefToObject(se, asOwner(vr))
+	err = action.Create(se)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	se = newVaultClientTLSSecret(vr, caCrt)
+	addOwnerRefToObject(se, asOwner(vr))
+	err = action.Create(se)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
+// newVaultServerTLSSecret returns a secret containing vault server TLS assets
+func newVaultServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+	return newTLSSecret(vr, caKey, caCrt, "vault server", api.DefaultVaultServerTLSSecretName(vr.Name),
+		[]string{
+			"localhost",
+			fmt.Sprintf("*.%s.pod", vr.Namespace),
+			fmt.Sprintf("%s.%s.svc", vr.Name, vr.Namespace),
+		},
+		map[string]string{
+			"key":  "server.key",
+			"cert": "server.crt",
+			// The CA is not used by the server
+			"ca": "server-ca.crt",
+		})
+}
+
+// newVaultClientTLSSecret returns a secret containing vault client TLS assets.
+// The client key and certificate are not generated since clients are not authenticated at the server
+func newVaultClientTLSSecret(vr *api.VaultService, caCrt *x509.Certificate) *v1.Secret {
+	return &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      api.DefaultVaultClientTLSSecretName(vr.Name),
+			Namespace: vr.Namespace,
+			Labels:    labelsForVault(vr.Name),
+		},
+		Data: map[string][]byte{
+			api.CATLSCertName: tls.EncodeCertificatePEM(caCrt),
+		},
+	}
+}
+
 // prepareEtcdTLSSecrets creates three etcd TLS secrets (client, server, peer) containing TLS assets.
 // Currently we self-generate the CA, and use the self generated CA to sign all the TLS certs.
 func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
@@ -146,8 +234,9 @@ func newTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certi
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   secretName,
-			Labels: labelsForVault(vr.Name),
+			Name:      secretName,
+			Namespace: vr.Namespace,
+			Labels:    labelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
 			fieldMap["key"]:  tls.EncodePrivateKeyPEM(key),
