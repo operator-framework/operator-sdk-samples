@@ -57,7 +57,12 @@ func reconcileVault(vr *api.VaultService) (err error) {
 		return err
 	}
 
-	// TODO: Deploy vault
+	err = prepareVaultConfig(vr)
+	if err != nil {
+		return err
+	}
+
+	// TODO:
 	return nil
 }
 
