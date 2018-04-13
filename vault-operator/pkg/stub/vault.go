@@ -62,7 +62,15 @@ func reconcileVault(vr *api.VaultService) (err error) {
 		return err
 	}
 
-	// TODO:
+	err = deployVault(vr)
+	if err != nil {
+		return err
+	}
+
+	err = syncVaultClusterSize(vr)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
