@@ -47,7 +47,7 @@ func reconcileVault(vr *api.VaultService) (err error) {
 			return fmt.Errorf("failed to check if etcd cluster is ready: %v", err)
 		}
 		if !ready {
-			logrus.Infof("Waiting for EtcdCluster (%v) to become ready: %v", ec.Name)
+			logrus.Infof("Waiting for EtcdCluster (%v) to become ready", ec.Name)
 			return nil
 		}
 	}
@@ -71,7 +71,7 @@ func isEtcdClusterReady(ec *eopapi.EtcdCluster) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return (len(ec.Status.Members.Ready) < size), nil
+	return (len(ec.Status.Members.Ready) == size), nil
 }
 
 // deployEtcdCluster creates an etcd cluster for the given vault's name via etcd operator.
