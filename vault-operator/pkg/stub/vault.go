@@ -71,6 +71,12 @@ func reconcileVault(vr *api.VaultService) (err error) {
 	if err != nil {
 		return err
 	}
+	vcs, err := vaultClusterStatus(vr)
+	if err != nil {
+		return err
+	}
+	// TODO: remove this
+	logrus.Printf("vault status: %+v", vcs)
 	return nil
 }
 
