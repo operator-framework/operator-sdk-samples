@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/sirupsen/logrus"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	"github.com/coreos/operator-sdk/pkg/sdk/query"
+	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,12 +71,16 @@ func reconcileVault(vr *api.VaultService) (err error) {
 	if err != nil {
 		return err
 	}
+
 	vcs, err := vaultClusterStatus(vr)
 	if err != nil {
 		return err
 	}
-	// TODO: remove this
-	logrus.Printf("vault status: %+v", vcs)
+
+	err = syncUpgrade(vr, vcs)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
