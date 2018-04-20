@@ -72,7 +72,7 @@ func reconcileVault(vr *api.VaultService) (err error) {
 		return err
 	}
 
-	vcs, err := vaultClusterStatus(vr)
+	vcs, err := getVaultStatus(vr)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,8 @@ func reconcileVault(vr *api.VaultService) (err error) {
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return updateVaultStatus(vr, vcs)
 }
 
 func isEtcdClusterReady(ec *eopapi.EtcdCluster) (bool, error) {

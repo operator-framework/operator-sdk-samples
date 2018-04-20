@@ -4,20 +4,31 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"strings"
 
 	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	vaultapi "github.com/hashicorp/vault/api"
 
+	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	"github.com/coreos/operator-sdk/pkg/sdk/query"
+	vaultapi "github.com/hashicorp/vault/api"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// vaultClusterStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
+func updateVaultStatus(vr *api.VaultService, status *api.VaultServiceStatus) error {
+	// don't update the status if there aren't any changes.
+	if reflect.DeepEqual(vr.Status, *status) {
+		return nil
+	}
+	vr.Status = *status
+	return action.Update(vr)
+}
+
+// getVaultStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
 // and it only succeeds if all of the nodes from vault cluster are reachable.
-func vaultClusterStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
+func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 	pods := &v1.PodList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
