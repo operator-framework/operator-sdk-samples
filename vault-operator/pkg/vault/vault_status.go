@@ -1,4 +1,4 @@
-package stub
+package vault
 
 import (
 	"errors"
@@ -151,12 +151,4 @@ func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 func podDNSName(p v1.Pod) string {
 	podIP := strings.Replace(p.Status.PodIP, ".", "-", -1)
 	return fmt.Sprintf("%s.%s.pod", podIP, p.Namespace)
-}
-
-func isVaultVersionMatch(ps v1.PodSpec, vs api.VaultServiceSpec) bool {
-	return ps.Containers[0].Image == vaultImage(vs)
-}
-
-func vaultImage(vs api.VaultServiceSpec) string {
-	return fmt.Sprintf("%s:%s", vs.BaseImage, vs.Version)
 }

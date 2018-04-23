@@ -1,4 +1,4 @@
-package stub
+package vault
 
 import (
 	"bytes"
@@ -23,6 +23,43 @@ const (
 	// serverTLSKeyName is the filename of the vault server key
 	serverTLSKeyName = "server.key"
 )
+
+// prepareVaultConfig applies our section into Vault config file.
+// - If given user configmap, appends into user provided vault config
+//   and creates another configmap "${configMapName}-copy" for it.
+// - Otherwise, creates a new configmap "${vaultName}-copy" with our section.
+func prepareVaultConfig(vr *api.VaultService) error {
+	var cfgData string
+	cm := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: vr.Namespace,
+		},
+	}
+	if len(vr.Spec.ConfigMapName) != 0 {
+		cm.Name = vr.Spec.ConfigMapName
+		err := query.Get(cm)
+		if err != nil {
+			return fmt.Errorf("prepare vault config error: get configmap (%s) failed: %v", vr.Spec.ConfigMapName, err)
+		}
+		cfgData = cm.Data[filepath.Base(vaultConfigPath)]
+	}
+
+	cm.Name = configMapNameForVault(vr)
+	cm.Labels = labelsForVault(vr.Name)
+	cfgData = newConfigWithDefaultParams(cfgData)
+	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
+	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}
+	addOwnerRefToObject(cm, asOwner(vr))
+	err := action.Create(cm)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("prepare vault config error: create new configmap (%s) failed: %v", cm.Name, err)
+	}
+	return nil
+}
 
 const listenerFmt = `
 listener "tcp" {
@@ -81,41 +118,4 @@ func configMapNameForVault(v *api.VaultService) string {
 		n = v.Name
 	}
 	return n + "-copy"
-}
-
-// prepareVaultConfig applies our section into Vault config file.
-// - If given user configmap, appends into user provided vault config
-//   and creates another configmap "${configMapName}-copy" for it.
-// - Otherwise, creates a new configmap "${vaultName}-copy" with our section.
-func prepareVaultConfig(vr *api.VaultService) error {
-	var cfgData string
-	cm := &v1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: vr.Namespace,
-		},
-	}
-	if len(vr.Spec.ConfigMapName) != 0 {
-		cm.Name = vr.Spec.ConfigMapName
-		err := query.Get(cm)
-		if err != nil {
-			return fmt.Errorf("prepare vault config error: get configmap (%s) failed: %v", vr.Spec.ConfigMapName, err)
-		}
-		cfgData = cm.Data[filepath.Base(vaultConfigPath)]
-	}
-
-	cm.Name = configMapNameForVault(vr)
-	cm.Labels = labelsForVault(vr.Name)
-	cfgData = newConfigWithDefaultParams(cfgData)
-	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
-	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}
-	addOwnerRefToObject(cm, asOwner(vr))
-	err := action.Create(cm)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return fmt.Errorf("prepare vault config error: create new configmap (%s) failed: %v", cm.Name, err)
-	}
-	return nil
 }
