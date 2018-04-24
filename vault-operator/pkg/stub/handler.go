@@ -2,6 +2,7 @@ package stub
 
 import (
 	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/vault"
 
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"
@@ -18,7 +19,7 @@ type Handler struct {
 func (h *Handler) Handle(ctx types.Context, event types.Event) error {
 	switch o := event.Object.(type) {
 	case *api.VaultService:
-		return reconcileVault(o)
+		return vault.Reconcile(o)
 	}
 	return nil
 }
