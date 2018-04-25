@@ -3,7 +3,7 @@ package vault
 import (
 	"fmt"
 
-	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	"k8s.io/api/core/v1"
 )

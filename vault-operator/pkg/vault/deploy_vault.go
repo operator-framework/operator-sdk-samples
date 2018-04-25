@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	"github.com/coreos/operator-sdk/pkg/sdk/action"
 	appsv1 "k8s.io/api/apps/v1"
