@@ -3,9 +3,9 @@ package vault
 import (
 	"fmt"
 
-	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
-	"github.com/coreos/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
 	"github.com/sirupsen/logrus"
 )
 
