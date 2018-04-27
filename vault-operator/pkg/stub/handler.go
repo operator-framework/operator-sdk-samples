@@ -1,8 +1,8 @@
 package stub
 
 import (
-	api "github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/coreos-inc/operator-sdk-samples/vault-operator/pkg/vault"
+	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vault"
 
 	"github.com/coreos/operator-sdk/pkg/sdk/handler"
 	"github.com/coreos/operator-sdk/pkg/sdk/types"

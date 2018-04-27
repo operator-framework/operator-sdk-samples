@@ -36,7 +36,7 @@ Checkout this Vault Operator repository:
 ```sh
 $ mkdir $GOPATH/github.com/coreos-inc
 $ cd $GOPATH/github.com/coreos-inc
-$ git clone https://github.com/coreos-inc/operator-sdk-samples.git
+$ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/vault-operator
 ```
 
