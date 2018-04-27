@@ -4,8 +4,8 @@ import (
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vault"
 
-	"github.com/coreos/operator-sdk/pkg/sdk/handler"
-	"github.com/coreos/operator-sdk/pkg/sdk/types"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/handler"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/types"
 )
 
 func NewHandler() handler.Handler {

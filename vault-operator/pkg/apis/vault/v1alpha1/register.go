@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	sdkK8sutil "github.com/coreos/operator-sdk/pkg/util/k8sutil"
+	sdkK8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

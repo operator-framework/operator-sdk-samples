@@ -9,8 +9,8 @@ import (
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
-	"github.com/coreos/operator-sdk/pkg/sdk/action"
-	"github.com/coreos/operator-sdk/pkg/sdk/query"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
+	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
 	vaultapi "github.com/hashicorp/vault/api"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

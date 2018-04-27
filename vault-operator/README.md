@@ -23,10 +23,10 @@ The quick start guide walks through the process of building the Vault operator i
 First, checkout and install the operator-sdk CLI:
 
 ```sh
-$ cd $GOPATH/src/github.com/coreos/operator-sdk
-$ git checkout tags/v0.0.4
+$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
+$ git checkout tags/v0.0.5
 $ dep ensure
-$ go install github.com/coreos/operator-sdk/commands/operator-sdk
+$ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
 
 ### Initial Setup
@@ -34,8 +34,8 @@ $ go install github.com/coreos/operator-sdk/commands/operator-sdk
 Checkout this Vault Operator repository:
 
 ```sh
-$ mkdir $GOPATH/github.com/coreos-inc
-$ cd $GOPATH/github.com/coreos-inc
+$ mkdir $GOPATH/github.com/operator-framework
+$ cd $GOPATH/github.com/operator-framework
 $ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/vault-operator
 ```
@@ -100,11 +100,9 @@ For example:
 
 `kubectl -n default get vault example ...` -> `kubectl -n default get vaultservice example ...`
 
-[action_api]:https://github.com/coreos/operator-sdk/blob/9e376a898dd785f3fe61626a9ac1eabea841c109/pkg/sdk/action/action.go
-[query_api]:https://github.com/coreos/operator-sdk/blob/9e376a898dd785f3fe61626a9ac1eabea841c109/pkg/sdk/query/query.go
 [client_go]:https://github.com/kubernetes/client-go
 [vault_operator]:https://github.com/coreos/vault-operator
-[operator_sdk]:https://github.com/coreos/operator-sdk
+[operator_sdk]:https://github.com/operator-framework/operator-sdk
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
