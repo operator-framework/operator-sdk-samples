@@ -5,8 +5,8 @@ import (
 	"runtime"
 
 	stub "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/stub"
-	sdk "github.com/coreos/operator-sdk/pkg/sdk"
-	sdkVersion "github.com/coreos/operator-sdk/version"
+	sdk "github.com/operator-framework/operator-sdk/pkg/sdk"
+	sdkVersion "github.com/operator-framework/operator-sdk/version"
 
 	"github.com/sirupsen/logrus"
 )

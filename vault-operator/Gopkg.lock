@@ -20,22 +20,6 @@
   revision = "daba74a707689f13ac3c93f44150d70f11f9b149"
 
 [[projects]]
-  name = "github.com/coreos/operator-sdk"
-  packages = [
-    "pkg/k8sclient",
-    "pkg/sdk",
-    "pkg/sdk/action",
-    "pkg/sdk/handler",
-    "pkg/sdk/informer",
-    "pkg/sdk/query",
-    "pkg/sdk/types",
-    "pkg/util/k8sutil",
-    "version"
-  ]
-  revision = "4dde66ab241ea83f5c12625ad2509174daf9c572"
-  version = "v0.0.3"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -250,6 +234,22 @@
   packages = ["."]
   revision = "1df9eeb2bb81f327b96228865c5687bc2194af3f"
   version = "1.0.0"
+
+[[projects]]
+  name = "github.com/operator-framework/operator-sdk"
+  packages = [
+    "pkg/k8sclient",
+    "pkg/sdk",
+    "pkg/sdk/action",
+    "pkg/sdk/handler",
+    "pkg/sdk/informer",
+    "pkg/sdk/query",
+    "pkg/sdk/types",
+    "pkg/util/k8sutil",
+    "version"
+  ]
+  revision = "31577c9d90b99b63043d2014de8fb2dd855aee78"
+  version = "v0.0.5"
 
 [[projects]]
   branch = "master"
@@ -491,6 +491,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5db98f10f0a219723d8d5a98a036ffe720e87e41b4fa619cbd949205ee3ce0a"
+  inputs-digest = "af0b2d6690831e5b2c7b847e9b5177a4a9e02429323fb39a524cedfc379bb211"
   solver-name = "gps-cdcl"
   solver-version = 1
