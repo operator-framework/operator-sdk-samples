@@ -51,7 +51,7 @@ $ dep ensure
 Build the Vault operator image and push it to a public registry such as quay.io:
 
 ```sh
-$ export $IMAGE=quay.io/example/vault-operator:v0.0.1
+$ export IMAGE=quay.io/example/vault-operator:v0.0.1
 $ operator-sdk build $IMAGE
 $ docker push $IMAGE
 ```
