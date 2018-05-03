@@ -34,8 +34,8 @@ $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 Checkout this Vault Operator repository:
 
 ```sh
-$ mkdir $GOPATH/github.com/operator-framework
-$ cd $GOPATH/github.com/operator-framework
+$ mkdir $GOPATH/src/github.com/operator-framework
+$ cd $GOPATH/src/github.com/operator-framework
 $ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/vault-operator
 ```
