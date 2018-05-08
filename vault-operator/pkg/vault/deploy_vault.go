@@ -270,11 +270,11 @@ func statsdExporterContainer() v1.Container {
 		Ports: []v1.ContainerPort{{
 			Name:          "statsd",
 			ContainerPort: exporterStatsdPort,
-			Protocol:      "UDP",
+			Protocol:      v1.ProtocolUDP,
 		}, {
 			Name:          "prometheus",
 			ContainerPort: exporterPromPort,
-			Protocol:      "TCP",
+			Protocol:      v1.ProtocolTCP,
 		}},
 	}
 }
