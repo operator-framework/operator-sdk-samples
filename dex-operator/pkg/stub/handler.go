@@ -178,20 +178,17 @@ func newDexPod(cr *v1alpha1.Dex) *appsv1.Deployment {
 						},
 					},
 					Volumes: []corev1.Volume{
-						{
-							corev1.Volume{
-								Name: "config",
-
-								corev1.VolumeSource{
-									ConfigMap: corev1.ConfigMapVolumeSource{
-										LocalObjectReference: corev1.LocalObjectReference{
-											Name: "dex",
-										},
-										Items: []corev1.KeyToPath{
-											corev1.KeyToPath{
-												Key:  "config.yaml",
-												Path: "config.yaml",
-											},
+						corev1.Volume{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "dex",
+									},
+									Items: []corev1.KeyToPath{
+										corev1.KeyToPath{
+											Key:  "config.yaml",
+											Path: "config.yaml",
 										},
 									},
 								},
