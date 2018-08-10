@@ -1,0 +1,4 @@
+apiVersion: "auth.example.com/v1alpha1"
+kind: "Dex"
+metadata:
+  name: "example"

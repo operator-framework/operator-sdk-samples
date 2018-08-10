@@ -1,0 +1,3 @@
+apiVersion: auth.example.com/v1alpha1
+kind: Dex
+projectName: dex-operator
