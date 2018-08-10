@@ -2,6 +2,7 @@ package stub
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/operator-framework/operator-sdk-samples/dex-operator/pkg/apis/auth/v1alpha1"
 
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func NewHandler() sdk.Handler {
@@ -28,7 +30,8 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 		if event.Deleted {
 			return nil
 		}
-		err := sdk.Create(newDexPod(o))
+		dep := newDexPod(o)
+		err := sdk.Create(dep)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create dex pod : %v", err)
 			return err
@@ -42,6 +45,18 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create dex pod : %v", err)
 			return err
+		}
+		err = sdk.Get(dep)
+		if err != nil {
+			return fmt.Errorf("failed to get deployment: %v", err)
+		}
+		size := o.Spec.Size
+		if *dep.Spec.Replicas != size {
+			dep.Spec.Replicas = &size
+			err = sdk.Update(dep)
+			if err != nil {
+				return fmt.Errorf("failed to update deployment: %v", err)
+			}
 		}
 	}
 	return nil
@@ -63,7 +78,7 @@ func newDexService(cr *v1alpha1.Dex) *corev1.Service {
 				Name:       "dex",
 				Protocol:   corev1.ProtocolTCP,
 				Port:       5556,
-				TargetPort: 5556,
+				TargetPort: intstr.FromInt(5556),
 				NodePort:   32000,
 			}},
 		},
@@ -89,17 +104,10 @@ func newDexConfigMap(cr *v1alpha1.Dex) *corev1.ConfigMap {
 				inCluster: true
 			web:
 			  https: 0.0.0.0:5556
-			  tlsCert: /etc/dex/tls/tls.crt
-			  tlsKey: /etc/dex/tls/tls.key
 			connectors:
-			- type: github
-			  id: github
-			  name: GitHub
-			  config:
-				clientID: $GITHUB_CLIENT_ID
-				clientSecret: $GITHUB_CLIENT_SECRET
-				redirectURI: https://dex.example.com:32000/callback
-				org: kubernetes
+			- type: mockCallback
+			  id: mock
+			  name: Mock
 			oauth2:
 			  skipApprovalScreen: true
 			staticClients:
