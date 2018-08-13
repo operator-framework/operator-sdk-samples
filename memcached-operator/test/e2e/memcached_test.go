@@ -20,10 +20,10 @@ import (
 	"testing"
 	"time"
 
-	operator "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
+	cachev1alpha1 "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -34,13 +34,13 @@ var (
 )
 
 func TestMemcached(t *testing.T) {
-	memcachedList := &operator.MemcachedList{
+	memcachedList := &cachev1alpha1.MemcachedList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Memcached",
 			APIVersion: "cache.example.com/v1alpha1",
 		},
 	}
-	err := framework.AddToFrameworkScheme(operator.AddToScheme, memcachedList)
+	err := framework.AddToFrameworkScheme(cachev1alpha1.AddToScheme, memcachedList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -57,7 +57,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 	// create memcached custom resource
-	exampleMemcached := &operator.Memcached{
+	exampleMemcached := &cachev1alpha1.Memcached{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Memcached",
 			APIVersion: "cache.example.com/v1alpha1",
@@ -66,7 +66,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 			Name:      "example-memcached",
 			Namespace: namespace,
 		},
-		Spec: operator.MemcachedSpec{
+		Spec: cachev1alpha1.MemcachedSpec{
 			Size: 3,
 		},
 	}
