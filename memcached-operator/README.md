@@ -19,7 +19,6 @@ $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
 $ git checkout master // currently, there are not releases that include the test framework, so use the master for now
 $ dep ensure
 $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
-$ rm -rf vender // to prevent vendoring conflicts with your operator
 ```
 
 ### Initial Setup
