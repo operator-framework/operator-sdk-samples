@@ -1,7 +1,7 @@
 # Memcached Operator
 
 ## Overview
-This Memcached operator is a simple example operato for the Operator SDK and includes some basic end-to-end tests.
+This Memcached operator is a simple example operator for the [Operator SDK][operator_sdk] and includes some basic end-to-end tests.
 
 ## Quick Start
 This quick start guide walks through the process of building the memcached-operator and running its end-to-end tests.
@@ -53,3 +53,8 @@ To run go-test with verbose and limit to 2 parallel tests:
 ```
 $ operator-sdk test --test-location ./test/e2e --kubeconfig $HOME/.kube/config --go-test-flags "-v -parallel=2"
 ```
+
+[dep_tool]:https://golang.github.io/dep/docs/installation.html
+[go_tool]:https://golang.org/dl/
+[docker_tool]:https://docs.docker.com/install/
+[operator_sdk]:https://github.com/operator-framework/operator-sdk
