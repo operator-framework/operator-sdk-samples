@@ -16,7 +16,7 @@ This quick start guide walks through the process of building the memcached-opera
 First, checkout and install the operator-sdk CLI:
 ```
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout master // currently, there are not releases that include the test framework, so use the master for now
+$ git checkout master // currently, there are no releases that include the test framework, so use the master for now
 $ dep ensure
 $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
