@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	cachev1alpha1 "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1"
+	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/util/e2eutil"
