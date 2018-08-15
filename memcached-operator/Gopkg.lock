@@ -218,20 +218,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d669534b13c0977455af642bd41f4ae314ae734afe7b3e312b5c32aa8aa95b87"
+  digest = "1:af1045d23f952f03f29338b6c884b94103ec9844813337075fd458b956b27fea"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sclient",
     "pkg/sdk",
     "pkg/sdk/internal/metrics",
     "pkg/test",
-    "pkg/util/e2eutil",
+    "pkg/test/e2eutil",
     "pkg/util/k8sutil",
-    "test/test-framework/pkg/apis/cache/v1alpha1",
     "version",
   ]
   pruneopts = ""
-  revision = "1f9f02d402256e9fc5a26fcc7ee07062854b3f3b"
+  revision = "ef476a9ff59609311bbc943f88bd96e2bf623a23"
 
 [[projects]]
   digest = "1:4142d94383572e74b42352273652c62afec5b23f325222ed09198f46009022d1"
@@ -661,9 +660,8 @@
   input-imports = [
     "github.com/operator-framework/operator-sdk/pkg/sdk",
     "github.com/operator-framework/operator-sdk/pkg/test",
-    "github.com/operator-framework/operator-sdk/pkg/util/e2eutil",
+    "github.com/operator-framework/operator-sdk/pkg/test/e2eutil",
     "github.com/operator-framework/operator-sdk/pkg/util/k8sutil",
-    "github.com/operator-framework/operator-sdk/test/test-framework/pkg/apis/cache/v1alpha1",
     "github.com/operator-framework/operator-sdk/version",
     "github.com/sirupsen/logrus",
     "k8s.io/api/apps/v1",
