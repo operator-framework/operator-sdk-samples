@@ -7,9 +7,8 @@ import (
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/tls"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +40,7 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 				Namespace: vr.Namespace,
 			},
 		}
-		err = query.Get(se)
+		err = sdk.Get(se)
 		if err == nil {
 			return nil
 		}
@@ -59,14 +58,14 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = action.Create(se)
+	err = sdk.Create(se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 
 	se = newVaultClientTLSSecret(vr, caCrt)
 	addOwnerRefToObject(se, asOwner(vr))
-	err = action.Create(se)
+	err = sdk.Create(se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -128,7 +127,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		},
 	}
 
-	err = query.Get(se)
+	err = sdk.Get(se)
 	if err == nil {
 		return nil
 	}
@@ -146,7 +145,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = action.Create(se)
+	err = sdk.Create(se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -156,7 +155,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = action.Create(se)
+	err = sdk.Create(se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -166,7 +165,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = action.Create(se)
+	err = sdk.Create(se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}

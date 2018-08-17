@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -95,7 +95,7 @@ func deployVault(v *api.VaultService) error {
 		},
 	}
 	addOwnerRefToObject(d, asOwner(v))
-	err := action.Create(d)
+	err := sdk.Create(d)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -132,7 +132,7 @@ func deployVault(v *api.VaultService) error {
 		},
 	}
 	addOwnerRefToObject(svc, asOwner(v))
-	err = action.Create(svc)
+	err = sdk.Create(svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create vault service: %v", err)
 	}

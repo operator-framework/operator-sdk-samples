@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +17,7 @@ func Reconcile(vr *api.VaultService) (err error) {
 	// Simulate initializer.
 	changed := vr.SetDefaults()
 	if changed {
-		return action.Update(vr)
+		return sdk.Update(vr)
 	}
 	// After first time reconcile, phase will switch to "Running".
 	if vr.Status.Phase == api.ClusterPhaseInitial {

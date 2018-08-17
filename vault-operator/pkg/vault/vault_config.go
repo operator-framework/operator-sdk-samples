@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +40,7 @@ func prepareVaultConfig(vr *api.VaultService) error {
 	}
 	if len(vr.Spec.ConfigMapName) != 0 {
 		cm.Name = vr.Spec.ConfigMapName
-		err := query.Get(cm)
+		err := sdk.Get(cm)
 		if err != nil {
 			return fmt.Errorf("prepare vault config error: get configmap (%s) failed: %v", vr.Spec.ConfigMapName, err)
 		}
@@ -54,7 +53,7 @@ func prepareVaultConfig(vr *api.VaultService) error {
 	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
 	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}
 	addOwnerRefToObject(cm, asOwner(vr))
-	err := action.Create(cm)
+	err := sdk.Create(cm)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("prepare vault config error: create new configmap (%s) failed: %v", cm.Name, err)
 	}

@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
 	vaultapi "github.com/hashicorp/vault/api"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +22,7 @@ func updateVaultStatus(vr *api.VaultService, status *api.VaultServiceStatus) err
 		return nil
 	}
 	vr.Status = *status
-	return action.Update(vr)
+	return sdk.Update(vr)
 }
 
 // getVaultStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
@@ -37,7 +36,7 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 	}
 	sel := labelsForVault(vr.Name)
 	opt := &metav1.ListOptions{LabelSelector: labels.SelectorFromSet(sel).String()}
-	err := query.List(vr.GetNamespace(), pods, query.WithListOptions(opt))
+	err := sdk.List(vr.GetNamespace(), pods, sdk.WithListOptions(opt))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vault's pods: %v", err)
 	}
@@ -124,7 +123,7 @@ func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err := query.Get(se)
+	err := sdk.Get(se)
 	if err != nil {
 		return nil, fmt.Errorf("read client tls failed: failed to get secret (%s): %v", cs, err)
 	}
