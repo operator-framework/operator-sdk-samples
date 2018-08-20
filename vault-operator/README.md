@@ -10,7 +10,7 @@ The quick start guide walks through the process of building the Vault operator i
 
 ### Prerequisites
 
-- [dep][dep_tool] version v0.4.1+.
+- [dep][dep_tool] version v0.5.0+.
 - [go][go_tool] version v1.10+.
 - [docker][docker_tool] version 17.03+.
 - [kubectl][kubectl_tool] version v1.9.0+.
@@ -24,7 +24,7 @@ First, checkout and install the operator-sdk CLI:
 
 ```sh
 $ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout tags/v0.0.5
+$ git checkout master
 $ dep ensure
 $ go install github.com/operator-framework/operator-sdk/commands/operator-sdk
 ```
@@ -66,6 +66,12 @@ Deploy the etcd-operator first because the Vault operator depends on it for prov
 
 ```sh
 $ kubectl create -f deploy/etcd-operator.yaml
+```
+
+Deploy the Vault CRD:
+
+```sh
+$ kubectl create -f deploy/crd.yaml
 ```
 
 Deploy the Vault operator:

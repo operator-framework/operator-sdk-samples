@@ -6,8 +6,7 @@ import (
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,14 +26,14 @@ func syncVaultClusterSize(vr *api.VaultService) error {
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err := query.Get(d)
+	err := sdk.Get(d)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment (%s): %v", d.Name, err)
 	}
 
 	if *d.Spec.Replicas != vr.Spec.Nodes {
 		d.Spec.Replicas = &(vr.Spec.Nodes)
-		err = action.Update(d)
+		err = sdk.Update(d)
 		if err != nil {
 			return fmt.Errorf("failed to update size of deployment (%s): %v", d.Name, err)
 		}
@@ -59,7 +58,7 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err = query.Get(d)
+	err = sdk.Get(d)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment (%s): %v", d.Name, err)
 	}
@@ -114,7 +113,7 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 				Namespace: vr.GetNamespace(),
 			},
 		}
-		err = action.Delete(p)
+		err = sdk.Delete(p)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("step down: failed to delete active Vault pod (%s): %v", active, err)
 		}
@@ -129,7 +128,7 @@ func upgradeDeployment(vr *api.VaultService, d *appsv1.Deployment) error {
 	mu := intstr.FromInt(int(vr.Spec.Nodes - 1))
 	d.Spec.Strategy.RollingUpdate.MaxUnavailable = &mu
 	d.Spec.Template.Spec.Containers[0].Image = vaultImage(vr.Spec)
-	err := action.Update(d)
+	err := sdk.Update(d)
 	if err != nil {
 		return fmt.Errorf("failed to upgrade deployment to (%s): %v", vaultImage(vr.Spec), err)
 	}

@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/action"
-	"github.com/operator-framework/operator-sdk/pkg/sdk/query"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +51,7 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 		ec.Spec.Pod.Resources = v.Spec.Pod.Resources
 	}
 	addOwnerRefToObject(ec, asOwner(v))
-	err := action.Create(ec)
+	err := sdk.Create(ec)
 	if err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			return ec, nil
@@ -73,7 +72,7 @@ func etcdURLForVault(name string) string {
 }
 
 func isEtcdClusterReady(ec *eopapi.EtcdCluster) (bool, error) {
-	err := query.Get(ec)
+	err := sdk.Get(ec)
 	if err != nil {
 		return false, err
 	}
