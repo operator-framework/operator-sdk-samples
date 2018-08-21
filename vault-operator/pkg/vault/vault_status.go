@@ -34,7 +34,7 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 			APIVersion: "v1",
 		},
 	}
-	sel := labelsForVault(vr.Name)
+	sel := LabelsForVault(vr.Name)
 	opt := &metav1.ListOptions{LabelSelector: labels.SelectorFromSet(sel).String()}
 	err := sdk.List(vr.GetNamespace(), pods, sdk.WithListOptions(opt))
 	if err != nil {
@@ -60,7 +60,7 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 			return nil, errors.New("vault pod is terminating")
 		}
 
-		vapi, err := newVaultClient(podDNSName(p), "8200", tc)
+		vapi, err := NewVaultClient(PodDNSName(p), "8200", tc)
 		if err != nil {
 			return nil, fmt.Errorf("failed creating client for the vault pod (%s/%s): %v", vr.GetNamespace(), p.GetName(), err)
 		}
@@ -102,7 +102,7 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 	}, nil
 }
 
-func newVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig) (*vaultapi.Client, error) {
+func NewVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig) (*vaultapi.Client, error) {
 	cfg := vaultapi.DefaultConfig()
 	podURL := fmt.Sprintf("https://%s:%s", hostname, port)
 	cfg.Address = podURL
@@ -110,7 +110,7 @@ func newVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig)
 	return vaultapi.NewClient(cfg)
 }
 
-// vaultTLSFromSecret reads Vault CR's TLS secret and converts it into a vault client's TLS config struct.
+// VaultTLSFromSecret reads Vault CR's TLS secret and converts it into a vault client's TLS config struct.
 func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 	cs := vr.Spec.TLS.Static.ClientSecret
 	se := &v1.Secret{
@@ -146,8 +146,8 @@ func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 	return &vaultapi.TLSConfig{CACert: f.Name()}, nil
 }
 
-// podDNSName constructs the dns name on which a pod can be addressed
-func podDNSName(p v1.Pod) string {
+// PodDNSName constructs the dns name on which a pod can be addressed
+func PodDNSName(p v1.Pod) string {
 	podIP := strings.Replace(p.Status.PodIP, ".", "-", -1)
 	return fmt.Sprintf("%s.%s.pod", podIP, p.Namespace)
 }

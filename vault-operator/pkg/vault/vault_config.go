@@ -48,7 +48,7 @@ func prepareVaultConfig(vr *api.VaultService) error {
 	}
 
 	cm.Name = configMapNameForVault(vr)
-	cm.Labels = labelsForVault(vr.Name)
+	cm.Labels = LabelsForVault(vr.Name)
 	cfgData = newConfigWithDefaultParams(cfgData)
 	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
 	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}

@@ -99,7 +99,7 @@ func newVaultClientTLSSecret(vr *api.VaultService, caCrt *x509.Certificate) *v1.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      api.DefaultVaultClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
-			Labels:    labelsForVault(vr.Name),
+			Labels:    LabelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
 			api.CATLSCertName: tls.EncodeCertificatePEM(caCrt),
@@ -122,7 +122,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      etcdClientTLSSecretName(vr.Name),
+			Name:      EtcdClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
 		},
 	}
@@ -193,7 +193,7 @@ func newCACert() (*rsa.PrivateKey, *x509.Certificate, error) {
 
 // newEtcdClientTLSSecret returns a secret containing etcd client TLS assets
 func newEtcdClientTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
-	return newTLSSecret(vr, caKey, caCrt, "etcd client", etcdClientTLSSecretName(vr.Name), nil,
+	return newTLSSecret(vr, caKey, caCrt, "etcd client", EtcdClientTLSSecretName(vr.Name), nil,
 		map[string]string{
 			"key":  "etcd-client.key",
 			"cert": "etcd-client.crt",
@@ -205,8 +205,8 @@ func newEtcdClientTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *
 func newEtcdPeerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd peer", etcdPeerTLSSecretName(vr.Name),
 		[]string{
-			fmt.Sprintf("*.%s.%s.svc", etcdNameForVault(vr.Name), vr.Namespace),
-			fmt.Sprintf("*.%s.%s.svc.%s", etcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
+			fmt.Sprintf("*.%s.%s.svc", EtcdNameForVault(vr.Name), vr.Namespace),
+			fmt.Sprintf("*.%s.%s.svc.%s", EtcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
 		},
 		map[string]string{
 			"key":  "peer.key",
@@ -235,7 +235,7 @@ func newTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certi
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: vr.Namespace,
-			Labels:    labelsForVault(vr.Name),
+			Labels:    LabelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
 			fieldMap["key"]:  tls.EncodePrivateKeyPEM(key),
@@ -263,12 +263,12 @@ func newEtcdServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *
 	return newTLSSecret(vr, caKey, caCrt, "etcd server", etcdServerTLSSecretName(vr.Name),
 		[]string{
 			"localhost",
-			fmt.Sprintf("*.%s.%s.svc", etcdNameForVault(vr.Name), vr.Namespace),
-			fmt.Sprintf("%s-client", etcdNameForVault(vr.Name)),
-			fmt.Sprintf("%s-client.%s", etcdNameForVault(vr.Name), vr.Namespace),
-			fmt.Sprintf("%s-client.%s.svc", etcdNameForVault(vr.Name), vr.Namespace),
-			fmt.Sprintf("*.%s.%s.svc.%s", etcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
-			fmt.Sprintf("%s-client.%s.svc.%s", etcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
+			fmt.Sprintf("*.%s.%s.svc", EtcdNameForVault(vr.Name), vr.Namespace),
+			fmt.Sprintf("%s-client", EtcdNameForVault(vr.Name)),
+			fmt.Sprintf("%s-client.%s", EtcdNameForVault(vr.Name), vr.Namespace),
+			fmt.Sprintf("%s-client.%s.svc", EtcdNameForVault(vr.Name), vr.Namespace),
+			fmt.Sprintf("*.%s.%s.svc.%s", EtcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
+			fmt.Sprintf("%s-client.%s.svc.%s", EtcdNameForVault(vr.Name), vr.Namespace, defaultClusterDomain),
 		},
 		map[string]string{
 			"key":  "server.key",
@@ -278,7 +278,7 @@ func newEtcdServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *
 }
 
 // etcdClientTLSSecretName returns the name of etcd client TLS secret for the given vault name
-func etcdClientTLSSecretName(vaultName string) string {
+func EtcdClientTLSSecretName(vaultName string) string {
 	return vaultName + "-etcd-client-tls"
 }
 

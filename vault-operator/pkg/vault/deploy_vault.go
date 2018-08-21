@@ -37,7 +37,7 @@ const (
 // deployVault is idempotent. If an object already exists, this function will ignore creating
 // it and return no error. It is safe to retry on this function.
 func deployVault(v *api.VaultService) error {
-	selector := labelsForVault(v.GetName())
+	selector := LabelsForVault(v.GetName())
 
 	podTempl := v1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -142,7 +142,7 @@ func deployVault(v *api.VaultService) error {
 // configEtcdBackendTLS configures the volume and mounts in vault pod to
 // set up etcd backend TLS assets
 func configEtcdBackendTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
-	sn := etcdClientTLSSecretName(v.Name)
+	sn := EtcdClientTLSSecretName(v.Name)
 	pt.Spec.Volumes = append(pt.Spec.Volumes, v1.Volume{
 		Name: vaultTLSAssetVolume,
 		VolumeSource: v1.VolumeSource{
@@ -186,6 +186,16 @@ func applyPodPolicy(s *v1.PodSpec, p *api.PodPolicy) {
 	for i := range s.InitContainers {
 		s.InitContainers[i].Resources = p.Resources
 	}
+}
+
+// IsPodReady checks the status of the pod for the Ready condition
+func IsPodReady(p v1.Pod) bool {
+	for _, c := range p.Status.Conditions {
+		if c.Type == v1.PodReady {
+			return c.Status == v1.ConditionTrue
+		}
+	}
+	return false
 }
 
 func vaultContainer(v *api.VaultService) v1.Container {
