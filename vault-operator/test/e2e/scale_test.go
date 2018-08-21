@@ -15,6 +15,7 @@
 package e2e
 
 import (
+	"fmt"
 	"testing"
 
 	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
@@ -47,11 +48,12 @@ func TestScaleUp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create vault cluster: %v", err)
 	}
-	defer func(vaultCR *api.VaultService) {
+	ctx.AddFinalizerFn(func() error {
 		if err := e2eutil.DeleteCluster(t, f.DynamicClient, vaultCR); err != nil {
-			t.Fatalf("failed to delete vault cluster: %v", err)
+			return fmt.Errorf("failed to delete vault cluster: %v", err)
 		}
-	}(vaultCR)
+		return nil
+	})
 
 	vaultCR, tlsConfig := e2eutil.WaitForCluster(t, f.KubeClient, f.DynamicClient, vaultCR)
 
