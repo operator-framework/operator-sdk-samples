@@ -73,9 +73,8 @@ func UpdateVersion(t *testing.T, crClient runtime.Client, vs *api.VaultService, 
 
 // DeleteCluster deletes the vault CR specified by cluster spec
 func DeleteCluster(t *testing.T, crClient runtime.Client, vs *api.VaultService) error {
-	vault := &api.VaultService{}
 	t.Logf("deleting vault cluster: %v", vs.Name)
-	err := crClient.Delete(goctx.TODO(), vault)
+	err := crClient.Delete(goctx.TODO(), vs)
 	if err != nil {
 		return fmt.Errorf("failed to delete CR: %v", err)
 	}
