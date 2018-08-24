@@ -61,7 +61,7 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 	return ec, nil
 }
 
-// etcdNameForVault returns the etcd cluster's name for the given vault's name
+// EtcdNameForVault returns the etcd cluster's name for the given vault's name
 func EtcdNameForVault(name string) string {
 	return name + "-etcd"
 }
