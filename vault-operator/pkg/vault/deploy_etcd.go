@@ -24,9 +24,9 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 			APIVersion: eopapi.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      etcdNameForVault(v.Name),
+			Name:      EtcdNameForVault(v.Name),
 			Namespace: v.Namespace,
-			Labels:    labelsForVault(v.Name),
+			Labels:    LabelsForVault(v.Name),
 		},
 		Spec: eopapi.ClusterSpec{
 			Size: size,
@@ -36,7 +36,7 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 						PeerSecret:   etcdPeerTLSSecretName(v.Name),
 						ServerSecret: etcdServerTLSSecretName(v.Name),
 					},
-					OperatorSecret: etcdClientTLSSecretName(v.Name),
+					OperatorSecret: EtcdClientTLSSecretName(v.Name),
 				},
 			},
 			Pod: &eopapi.PodPolicy{
@@ -61,14 +61,14 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 	return ec, nil
 }
 
-// etcdNameForVault returns the etcd cluster's name for the given vault's name
-func etcdNameForVault(name string) string {
+// EtcdNameForVault returns the etcd cluster's name for the given vault's name
+func EtcdNameForVault(name string) string {
 	return name + "-etcd"
 }
 
 // etcdURLForVault returns the URL to talk to etcd cluster for the given vault's name
 func etcdURLForVault(name string) string {
-	return fmt.Sprintf("https://%s-client:2379", etcdNameForVault(name))
+	return fmt.Sprintf("https://%s-client:2379", EtcdNameForVault(name))
 }
 
 func isEtcdClusterReady(ec *eopapi.EtcdCluster) (bool, error) {

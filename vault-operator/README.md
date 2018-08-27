@@ -106,6 +106,19 @@ For example:
 
 `kubectl -n default get vault example ...` -> `kubectl -n default get vaultservice example ...`
 
+## Tests
+This repo contains some tests that use the operator-sdk's test framework. These tests are based directly on the original vault-operator
+tests, and **thus cannot fully complete when run on a local machine and must be run inside a kubernetes cluster instead**. This is a very
+specific use case, so it is not handled by the sdk's test framework. However, it is a good example of how to use the framework for
+an operator that needs more resources than standard to initilize due to the dependency on etcd. These tests fully initialize a vault
+cluster and tear it down when run on a local machine, even though they do fail due to not being able to use the vault-client to
+communicate with the vault pods. To run these tests using the specific test init files, modify the vault-operator's spec inside
+`deploy/namespaced-init.yaml` to point to your repo containing the vault-operator, and then run this command:
+
+```sh
+$ operator-sdk test -t ./test/e2e/ -g deploy/global-init.yaml -n deploy/namespaced-init.yaml
+```
+
 [client_go]:https://github.com/kubernetes/client-go
 [vault_operator]:https://github.com/coreos/vault-operator
 [operator_sdk]:https://github.com/operator-framework/operator-sdk
@@ -114,4 +127,4 @@ For example:
 [docker_tool]:https://docs.docker.com/install/
 [kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [minikube_tool]:https://github.com/kubernetes/minikube#installation
-[guide]:https://github.com/coreos/vault-operator/blob/master/doc/user/vault.md 
+[guide]:https://github.com/coreos/vault-operator/blob/master/doc/user/vault.md
