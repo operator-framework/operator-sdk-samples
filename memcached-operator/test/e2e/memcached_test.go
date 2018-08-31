@@ -118,7 +118,7 @@ func MemcachedCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = memcachedScaleTest(t, f, &ctx); err != nil {
+	if err = memcachedScaleTest(t, f, ctx); err != nil {
 		t.Fatal(err)
 	}
 }
