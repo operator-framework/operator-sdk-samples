@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func NewHandler() sdk.Handler {
@@ -41,6 +42,13 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			return fmt.Errorf("failed to create deployment: %v", err)
 		}
 
+		// Create the geth client service
+		service := serviceForGethNode(geth)
+		err = sdk.Create(service)
+		if err != nil && !apierrors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create service: %v", err)
+		}
+
 		// Ensure the deployment size is the same as the spec
 		err = sdk.Get(dep)
 		if err != nil {
@@ -57,8 +65,8 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 
 		// Update the GethNode status with the pod names
 		podList := podList()
-		depLabels := labelsForGethNode(geth)
-		labelSelector := labels.SelectorFromSet(depLabels).String()
+		ls := labelsForGethNode(geth)
+		labelSelector := labels.SelectorFromSet(ls).String()
 		listOps := &metav1.ListOptions{LabelSelector: labelSelector}
 		err = sdk.List(geth.Namespace, podList, sdk.WithListOptions(listOps))
 		if err != nil {
@@ -102,43 +110,13 @@ func newGethNodeConfigMap(cr *v1alpha1.GethNode) *corev1.ConfigMap {
 			EthashDatasetsOnDisk = 2
 			EnablePreimageRecording = false
 
-			[Eth.TxPool]
-			NoLocals = false
-			Journal = "transactions.rlp"
-			Rejournal = 3600000000000
-			PriceLimit = 1
-			PriceBump = 10
-			AccountSlots = 16
-			GlobalSlots = 4096
-			AccountQueue = 64
-			GlobalQueue = 1024
-			Lifetime = 10800000000000
-
-			[Eth.GPO]
-			Blocks = 10
-			Percentile = 50
-
-			[Shh]
-			MaxMessageSize = 1048576
-			MinimumAcceptedPOW = 2e-01
-
 			[Node]
 			DataDir = "/eth/geth/.ethereum"
-			# Uncomment below for HTTP/WebSocket support
-			# IPCPath = "geth.ipc"
-			# HTTPPort = 8545
-			# HTTPModules = ["net", "web3", "eth", "shh"]
-			# WSPort = 8546
-			# WSModules = ["net", "web3", "eth", "shh"]
 
 			[Node.P2P]
 			MaxPeers = 25
 			NoDiscovery = false
 			DiscoveryV5Addr = ":30304"
-			BootstrapNodes = ["enode://a979fb575495b8d6db44f750317d0f4622bf4c2aa3365d6af7c284339968eef29b69ad0dce72a4d8db5ebb4968de0e3bec910127f134779fbcb0cb6d3331163c@52.16.188.185:30303", "enode://3f1d12044546b76342d59d4a05532c14b85aa669704bfe1f864fe079415aa2c02d743e03218e57a33fb94523adb54032871a6c51b2cc5514cb7c7e35b3ed0a99@13.93.211.84:30303", "enode://78de8a0916848093c73790ead81d1928bec737d565119932b98c6b100d944b7a95e94f847f689fc723399d2e31129d182f7ef3863f2b4c820abbf3ab2722344d@191.235.84.50:30303", "enode://158f8aab45f6d19c6cbf4a089c2670541a8da11978a2f90dbf6a502a4a3bab80d288afdbeb7ec0ef6d92de563767f3b1ea9e8e334ca711e9f8e2df5a0385e8e6@13.75.154.138:30303", "enode://1118980bf48b0a3640bdba04e0fe78b1add18e1cd99bf22d53daac1fd9972ad650df52176e7c7d89d1114cfef2bc23a2959aa54998a46afcf7d91809f0855082@52.74.57.123:30303", "enode://979b7fa28feeb35a4741660a16076f1943202cb72b6af70d327f053e248bab9ba81760f39d0701ef1d8f89cc1fbd2cacba0710a12cd5314d5e0c9021aa3637f9@5.1.83.226:30303"]
-			BootstrapNodesV5 = ["enode://0cc5f5ffb5d9098c8b8c62325f3797f56509bff942704687b6530992ac706e2cb946b90a34f1f19548cd3c7baccbcaea354531e5983c7d1bc0dee16ce4b6440b@40.118.3.223:30305", "enode://1c7a64d76c0334b0418c004af2f67c50e36a3be60b5e4790bdac0439d21603469a85fad36f2473c9a80eb043ae60936df905fa28f1ff614c3e5dc34f15dcd2dc@40.118.3.223:30308", "enode://85c85d7143ae8bb96924f2b54f1b3e70d8c4d367af305325d30a61385a432f247d2c75c45c6b4a60335060d072d7f5b35dd1d4c45f76941f62a4f83b6e75daaf@40.118.3.223:30309"]
-			StaticNodes = []
-			TrustedNodes = []
 			ListenAddr = ":30303"
 			EnableMsgEvents = false
 			`,
@@ -172,8 +150,50 @@ func asOwner(m *v1alpha1.GethNode) metav1.OwnerReference {
 	}
 }
 
+func serviceForGethNode(cr *v1alpha1.GethNode) *corev1.Service {
+	ls := labelsForGethNode(cr)
+
+	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+			Labels:    ls,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: ls,
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "listen",
+					Protocol:   corev1.ProtocolUDP,
+					Port:       30303,
+					TargetPort: intstr.FromString("p2p-listen"),
+				},
+				{
+					Name:       "discovery",
+					Port:       30304,
+					TargetPort: intstr.FromString("p2p-discovery"),
+				},
+				{
+					Name:       "rpc-json",
+					Port:       8545,
+					TargetPort: intstr.FromString("rpc-json"),
+				},
+				{
+					Name:       "rpc-ws",
+					Port:       8546,
+					TargetPort: intstr.FromString("rpc-ws"),
+				},
+			},
+		},
+	}
+}
+
 func deploymentForGethNode(cr *v1alpha1.GethNode) *appsv1.Deployment {
-	depLabels := labelsForGethNode(cr)
+	ls := labelsForGethNode(cr)
 	replicas := cr.Spec.Size
 
 	dep := &appsv1.Deployment{
@@ -184,16 +204,16 @@ func deploymentForGethNode(cr *v1alpha1.GethNode) *appsv1.Deployment {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name,
 			Namespace: cr.Namespace,
-			Labels:    depLabels,
+			Labels:    ls,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: depLabels,
+				MatchLabels: ls,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: depLabels,
+					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -203,12 +223,21 @@ func deploymentForGethNode(cr *v1alpha1.GethNode) *appsv1.Deployment {
 							Args:  []string{"--config", "/etc/geth/cfg/config.toml", "--datadir", "/etc/geth/.ethereum"},
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "geth-p2p-listen",
+									Name:          "p2p-listen",
 									ContainerPort: 30303,
+									Protocol:      corev1.ProtocolUDP,
 								},
 								{
-									Name:          "geth-p2p-discovery",
+									Name:          "p2p-discovery",
 									ContainerPort: 30304,
+								},
+								{
+									Name:          "rpc-json",
+									ContainerPort: 8545,
+								},
+								{
+									Name:          "rpc-ws",
+									ContainerPort: 8546,
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
