@@ -1,0 +1,4 @@
+apiVersion: "geth.example.com/v1alpha1"
+kind: "GethNode"
+metadata:
+  name: "example"
