@@ -51,7 +51,7 @@ func TestMemcached(t *testing.T) {
 	})
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.TestCtx) error {
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
 	namespace, err := ctx.GetNamespace()
 	if err != nil {
 		return fmt.Errorf("could not get namespace: %v", err)
@@ -74,6 +74,9 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx framework.Test
 	if err != nil {
 		return err
 	}
+	ctx.AddFinalizerFn(func() error {
+		return f.DynamicClient.Delete(goctx.TODO(), exampleMemcached)
+	})
 	// wait for example-memcached to reach 3 replicas
 	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 3, retryInterval, timeout)
 	if err != nil {
