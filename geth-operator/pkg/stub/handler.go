@@ -49,6 +49,13 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			return fmt.Errorf("failed to create service: %v", err)
 		}
 
+		// Create the configmap containing geth configuration data
+		cmap := configMapForGethNode(geth)
+		err = sdk.Create(cmap)
+		if err != nil && !apierrors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create configmap: %v", err)
+		}
+
 		// Ensure the deployment size is the same as the spec
 		err = sdk.Get(dep)
 		if err != nil {
@@ -84,7 +91,9 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 	return nil
 }
 
-func newGethNodeConfigMap(cr *v1alpha1.GethNode) *corev1.ConfigMap {
+// configMapForGethNode creates a configmap that provides a default
+// config.toml to the geth pod.
+func configMapForGethNode(cr *v1alpha1.GethNode) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -150,6 +159,8 @@ func asOwner(m *v1alpha1.GethNode) metav1.OwnerReference {
 	}
 }
 
+// serviceForGethNode creates a default service for geth to listen, be
+// discovered, and communicate over RPC.
 func serviceForGethNode(cr *v1alpha1.GethNode) *corev1.Service {
 	ls := labelsForGethNode(cr)
 
@@ -192,6 +203,8 @@ func serviceForGethNode(cr *v1alpha1.GethNode) *corev1.Service {
 	}
 }
 
+// deploymentForGethNode creates a simple geth deployment that loads local
+// geth and Ethereum network configuration data.
 func deploymentForGethNode(cr *v1alpha1.GethNode) *appsv1.Deployment {
 	ls := labelsForGethNode(cr)
 	replicas := cr.Spec.Size
