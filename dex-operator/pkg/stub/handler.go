@@ -36,12 +36,12 @@ func (h *Handler) Handle(ctx context.Context, event sdk.Event) error {
 			logrus.Errorf("Failed to create dex pod : %v", err)
 			return err
 		}
-		err = sdk.Create(newDexPod(o))
+		err = sdk.Create(newDexService(o))
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create dex pod : %v", err)
 			return err
 		}
-		err = sdk.Create(newDexService(o))
+		err = sdk.Create(newDexConfigMap(o))
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logrus.Errorf("Failed to create dex pod : %v", err)
 			return err

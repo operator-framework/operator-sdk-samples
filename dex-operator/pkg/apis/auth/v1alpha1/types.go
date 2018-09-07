@@ -22,10 +22,10 @@ type Dex struct {
 }
 
 type DexSpec struct {
-	// Size is the size of the memcached deployment
+	// Size is the size of the dex deployment
 	Size int32 `json:"size"`
 }
 type DexStatus struct {
-	// Nodes are the names of the memcached pods
+	// Nodes are the names of the dex pods
 	Nodes []string `json:"nodes"`
 }

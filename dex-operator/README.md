@@ -35,7 +35,7 @@ $ dep ensure
 ```
 
 ### Build the operator
-Build the Memcached operator image and push it to a public registry, such as quay.io
+Build the Dex operator image and push it to a public registry, such as quay.io
 ```
 $ export IMAGE=quay.io/example-inc/dex-operator:v0.0.1
 $ operator-sdk build $IMAGE
