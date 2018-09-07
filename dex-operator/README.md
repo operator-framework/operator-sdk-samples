@@ -1,7 +1,12 @@
 # Dex Operator
 
 ## Overview
-This Dex operator is an operator built with the [Operator SDK][operator_sdk]. Currently the operator supports scaling the numbers of pods on the mock connector and future work involves allowing the connectors to be configured using the operator CRD.
+This [Dex][dex_link] operator is an operator built with the [Operator SDK][operator_sdk]. Currently the operator supports scaling the numbers of pods (dex servers). Future work involves allowing the connectors to be configured using the operator CRD.
+
+What is dex?
+>Dex is an identity service that uses OpenID Connect to drive authentication for other apps.
+>
+>Dex acts as a portal to other identity providers through "connectors." This lets dex defer authentication to LDAP servers, SAML providers, or established identity providers like GitHub, Google, and Active Directory. Clients write their authentication logic once to talk to dex, then dex handles the protocols for a given backend.
 
 ## Quick Start
 This quick start guide walks through the process of building the dex-operator.
@@ -46,3 +51,4 @@ $ docker push $IMAGE
 [go_tool]:https://golang.org/dl/
 [docker_tool]:https://docs.docker.com/install/
 [operator_sdk]:https://github.com/operator-framework/operator-sdk
+[dex_link]:https://github.com/dexidp/dex
