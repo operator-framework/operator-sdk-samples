@@ -30,6 +30,10 @@ func (ctx *TestCtx) GetNamespace() (string, error) {
 	if ctx.Namespace != "" {
 		return ctx.Namespace, nil
 	}
+	if Global.SingleNamespace {
+		ctx.Namespace = Global.Namespace
+		return ctx.Namespace, nil
+	}
 	// create namespace
 	ctx.Namespace = ctx.GetID()
 	namespaceObj := &core.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ctx.Namespace}}
