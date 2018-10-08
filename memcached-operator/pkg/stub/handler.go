@@ -1,9 +1,9 @@
 package stub
 
 import (
+	"context"
 	"fmt"
 	"reflect"
-	"context"
 
 	v1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
