@@ -1,6 +1,8 @@
 ## etcd-ansible-operator
 
-This operator implements the [etcd-operator](https://github.com/coreos/etcd-operator/) using ansible and is run using [ansible-operator](https://github.com/water-hole/ansible-operator)
+This operator implements the [etcd-operator](https://github.com/coreos/etcd-operator/) using ansible built on top of [ansible-operator](https://github.com/water-hole/ansible-operator).
+
+__***Note:***__ This is a work in progress. Features like backup and restore will be added soon. This operator uses a different version of base image to support `failover` feature.
 
 ### Pre-requisites:
 

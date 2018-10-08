@@ -8,4 +8,4 @@ USER ${USER_NAME}
 ENV RESYNC_PERIOD=8
 COPY ansible/roles/ ${HOME}/roles/
 COPY ansible/playbook.yaml ${HOME}/playbook.yaml
-COPY config.yaml ${HOME}/watches.yaml
+COPY watches.yaml ${HOME}/watches.yaml
