@@ -1,0 +1,5 @@
+---
+- version: v1beta2
+  group: etcd.database.coreos.com
+  kind: EtcdCluster
+  playbook: /opt/ansible/playbook.yaml

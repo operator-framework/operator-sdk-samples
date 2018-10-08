@@ -1,0 +1,58 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - debug: msg="Running Galera Ansible Operator Playbook 0002"
+
+  # The cluster size is set via an external variable which comes from the CR
+  # spec. Because of this, we need to create a new variable for internal use
+  # which has a lower scope so we can override it.
+  - set_fact:
+      _p_galera_cluster_size: "{% if galera_cluster_size|int > 0 %}{{galera_cluster_size}}{% else %}1{% endif %}"
+
+  - set_fact:
+      galera_nodes: []
+  - set_fact:
+      galera_nodes: "{{ galera_nodes }} + [ '{{ \"galera-node-%04d\"|format(item|int) }}' ]"
+    with_sequence: "start=1 end={{_p_galera_cluster_size}}"
+
+  - set_fact:
+      node_list: []
+  - set_fact:
+      node_list: "{{node_list}} + [ '{{item}}' + '-service' ]"
+    loop: "{{galera_nodes}}"
+
+  - include_role:
+      name: get_status
+
+  # variables used when resizing the cluster
+  - set_fact:
+      current_pod_count: "{{ pods_lookup|length }}"
+  - debug:
+      var: current_pod_count
+  - set_fact:
+      cluster_size_changing: "{% if _p_galera_cluster_size|int != pods_lookup|length %}True{% else %}False{% endif %}"
+  - debug:
+      var: cluster_size_changing
+  - set_fact:
+      removing_nodes: "{% if _p_galera_cluster_size|int < pods_lookup|length %}True{% else %}False{% endif %}"
+  - debug:
+      var: removing_nodes
+
+  - include_tasks: create_node.yaml
+    args:
+      galera_node_name: "{{item}}"
+      # pod 1 should only bootstrap if the cluster is not already established
+      #do_bootstrap: "{% if item == galera_nodes[0] and current_pod_count|int == 0 %}True{% else %}False{% endif %}"
+      do_bootstrap: "{% if item == galera_nodes[0] %}True{% else %}False{% endif %}"
+    loop: "{{galera_nodes}}"
+    when: _p_galera_cluster_size|int > current_pod_count|int
+
+  - debug:
+      msg: "CURRENT NODES: {{pods_lookup|length}}"
+  - debug:
+       msg: "REQUESTED CLUSTER SIZE: {{_p_galera_cluster_size|int}}"
+
+  - include_tasks: cleanup_nodes.yaml
+    when: removing_nodes
+
+  - include_tasks: deploy_haproxy.yaml

@@ -1,0 +1,12 @@
+apiVersion: "galera.database.coreos.com/v1alpha1"
+kind: "GaleraService"
+metadata:
+  name: "galera-example"
+spec:
+  galera_app_name: "galera-app"
+  galera_cluster_name: "galera"
+  galera_cluster_size: 3
+  galera_configmap_name: "galera-configmap"
+  mariadb_version: "10.3.9"
+  namespace: "default"
+  persistent_volume: "pv001"

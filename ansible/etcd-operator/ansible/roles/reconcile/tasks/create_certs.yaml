@@ -1,0 +1,34 @@
+---
+- name: lookup the operator secret and populate the certs
+  vars:
+    operator_secret: "{{ lookup('k8s', api_version='v1', kind='Secret', namespace=etcd_namespace,
+                                resource_name=_tls.static.operator_secret) }}"
+  set_fact:
+#    operator_secret: "{{ lookup('k8s', api_version='v1', kind='Secret', namespace=etcd_namespace,
+#                                  resource_name=_tls.static.operator_secret) }}"
+    tls_directory: "/tmp/etcdtls/{{etcd_cluster_name}}"
+    ca_cert: "{{ operator_secret['data']['etcd-client-ca.crt'] | b64decode}}"
+    client_cert: "{{ operator_secret['data']['etcd-client.crt'] | b64decode}}"
+    client_key: "{{ operator_secret['data']['etcd-client.key'] | b64decode}}"
+
+
+- name: create the tls_directory
+  file:
+    path: "{{ tls_directory }}"
+    state: directory
+    mode: 0700
+
+- name: create ca file
+  copy:
+    dest: "{{ tls_directory }}/etcd-ca.cert"
+    content: "{{ ca_cert }}"
+
+- name: create client certificate
+  copy:
+    dest: "{{ tls_directory }}/etcd-client.crt"
+    content: "{{ client_cert }}"
+
+- name: create client key
+  copy:
+    dest: "{{ tls_directory }}/etcd-client.key"
+    content: "{{ client_key }}"

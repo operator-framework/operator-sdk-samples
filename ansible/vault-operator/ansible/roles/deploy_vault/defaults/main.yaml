@@ -1,0 +1,40 @@
+---
+state: "present"
+
+# Configmap
+vault_tls_asset_dir: "/run/vault/tls"
+server_tls_cert_name: "server.crt"
+server_tls_key_name:  "server.key"
+client_tls_ca_crt_name: "etcd-client-ca.crt"
+client_tls_cert_name: "etcd-client.crt"
+client_tls_key_name: "etcd-client.key"
+
+# Deployment
+vault_volume_default_mode: 420
+
+vault_config_path: "/run/vault/config"
+vault_config_file_path: "{{ vault_config_path }}/vault.hcl"
+
+vault_tls_asset_volume_name: "vault-tls-secret"
+vault_config_vol_name: "vault-config"
+vault_redirect_addr_env_name: "VAULT_API_ADDR"
+vault_cluster_addr_env_name: "VAULT_CLUSTER_ADDR"
+vault_redirect_addr_url: "https://{{ vault_cluster_name }}.{{ namespace }}.svc:{{ vault_client_port_num }}"
+vault_cluster_addr_url: "https://{{ vault_cluster_name }}.{{ namespace }}.svc:{{ vault_cluster_port_num }}"
+
+vault_deployment_strategy_type: "RollingUpdate"
+vault_deployment_strategy_max_unavailable: 5
+vault_deployment_strategy_max_surge: 0
+
+vault_image_pull_policy: "IfNotPresent"
+
+vault_client_port_name: "vault-client"
+vault_cluster_port_name: "vault-cluster"
+vault_statsd_port_name: "statsd"
+vault_prometheus_port_name: "prometheus"
+
+vault_client_port_num: 8200
+vault_cluster_port_num: 8201
+vault_statsd_port_num: 9125
+vault_prometheus_port_num: 9102
+exporter_image_name: "prom/statsd-exporter:v0.5.0"

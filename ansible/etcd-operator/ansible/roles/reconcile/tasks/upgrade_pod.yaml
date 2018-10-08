@@ -1,0 +1,15 @@
+---
+- name: upgrade member {{ item }}
+  k8s:
+    state: "present"
+    definition:
+      apiVersion: "v1"
+      kind: "Pod"
+      metadata:
+        name: "{{ item.metadata.name }}"
+        namespace: "{{etcd_namespace}}"
+      spec:
+        containers:
+        - name: "etcd"
+          image: "{{ image }}"
+  when: item.status.phase == "Running" and item.spec.containers[0].image != image
