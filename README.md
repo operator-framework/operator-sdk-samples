@@ -6,4 +6,4 @@ This repo contains samples of operators built using the [operator-sdk][operator_
 To view operators which leverage Ansible for deployment, see the [Ansible][ansible_examples] samples section.
 
 [operator_sdk]:https://github.com/coreos/operator-sdk
-[ansible_examples]:./ansible/README.md
+[ansible_examples]:./ansible/
