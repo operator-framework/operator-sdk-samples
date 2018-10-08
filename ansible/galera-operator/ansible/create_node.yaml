@@ -1,0 +1,121 @@
+- debug: 
+    msg: "CREATING GALERA NODE {{galera_node_name}}"
+
+#- name: create the pod service name
+#  set_fact:
+#    pod_service_name: "{{ galera_node_name+'-service' }}"
+#
+#- block:
+#  - name: "lookup k8s service for {{galera_node_name}}"
+#    set_fact:
+#      node_service_status: "{{ q('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=pod_service_name)[0] }}"
+#  rescue:
+#  - name: set node_service_status to default on failure
+#    set_fact:
+#      node_service_status: []
+#
+#- name: "CREATE SERVICES FOR GALERA NODE {{galera_node_name}}"
+#  k8s:
+#    definition: "{{lookup('template', 'pod_service.tmpl')|from_yaml}}"
+#  when: not node_service_status
+#  register: service_result
+#
+#- name: "refresh node_service_status for {{galera_node_name}}"
+#  set_fact:
+#    node_service_status: "{{ q('k8s', api_version='v1', kind='Service', namespace=namespace, resource_name=pod_service_name)[0] }}"
+#  when: service_result|changed
+#
+#- debug:
+#    var: node_service_status
+
+- name: set pod configmap name
+  set_fact:
+    pod_configmap_name: "{{ galera_configmap_name + '-' + galera_node_name }}"
+- block:
+  - name: "lookup ConfigMap for {{galera_node_name}}"
+    set_fact:
+      node_configmap_status: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name=pod_configmap_name)[0] }}"
+  rescue:
+  - name: set configmap_status to default
+    set_fact:
+      node_configmap_status: []
+
+- name: "CREATE CONFIGMAP FOR GALERA {{galera_node_name}}"
+  k8s:
+    definition: "{{lookup('template', 'pod_configmap.tmpl')|from_yaml}}"
+  register: configmap_result
+  when: not node_configmap_status or cluster_size_changing|bool
+
+- name: "lookup ConfigMap for {{galera_node_name}}"
+  set_fact:
+    node_configmap_status: "{{ q('k8s', api_version='v1', kind='ConfigMap', namespace=namespace, resource_name=pod_configmap_name)[0] }}"
+  when: configmap_result|changed
+
+- debug:
+    var: node_configmap_status
+
+- name: set the pvc name for the pod
+  set_fact:
+    pod_pvc_name: "{{ galera_node_name + '-mysql-data' }}"
+- block:
+  - name: "lookup PVC for {{galera_node_name}}"
+    set_fact:
+      node_pvc_status: "{{ q('k8s', api_version='v1', kind='PersistentVolumeClaim', namespace=namespace, resource_name=pod_pvc_name)[0] }}"
+  rescue:
+  - name: set node_pvc_status to default on failure
+    set_fact:
+      node_pvc_status: []
+
+- name: "CREATE PVC FOR GALERA NODE {{galera_node_name}}"
+  k8s:
+    definition: "{{lookup('template', 'pod_pvc.tmpl')|from_yaml}}"
+  register: pvc_result
+  when: not node_pvc_status
+
+- name: "lookup PVC for {{galera_node_name}}"
+  set_fact:
+    node_pvc_status: "{{ q('k8s', api_version='v1', kind='PersistentVolumeClaim', namespace=namespace, resource_name=pod_pvc_name)[0] }}"
+  when: pvc_result|changed
+
+- block:
+  - name: "lookup Pod for {{galera_node_name}}"
+    set_fact:
+      node_pod_status: "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace, resource_name=galera_node_name)[0] }}"
+  rescue:
+  - name: set node_pod_status to default on failure
+    set_fact:
+      node_pod_status: []
+
+- debug: msg="{{lookup('template', 'pod_definition.tmpl')|from_yaml}}"
+- name: "CREATE POD FOR GALERA NODE {{galera_node_name}}"
+  k8s:
+    definition: "{{lookup('template', 'pod_definition.tmpl')|from_yaml}}"
+  register: pod_result
+  when: not node_pod_status
+
+- debug:
+    msg: "About to loop for pod status and wait for pod IP"
+- debug:
+    var: node_pod_status
+
+- name: "lookup Pod for {{galera_node_name}}"
+  set_fact:
+    node_pod_status: "{{ q('k8s', api_version='v1', kind='Pod', namespace=namespace, resource_name=galera_node_name)[0] }}"
+  #until: node_pod_status.status is defined and node_pod_status.status.podIP is defined and node_pod_status.status.podIP not in ('', None)
+  #retries: 90
+  #delay: 1
+  when: pod_result|changed
+
+- debug:
+    var: node_pod_status
+
+- name: Wait for mysqld and galera ports to be available before proceeding
+  wait_for:
+    #host: "{{node_service_status.spec.clusterIP}}"
+    host: "{{node_pod_status.status.podIP}}"
+    port: "{{item|int}}"
+    sleep: 1
+    timeout: 300
+  loop: [3306, 4567]
+  when: pod_result|changed
+

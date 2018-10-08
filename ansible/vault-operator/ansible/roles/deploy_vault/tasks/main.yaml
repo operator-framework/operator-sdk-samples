@@ -1,0 +1,11 @@
+---
+- name: Create Default configmap
+  include_tasks: configmap.yaml
+  when: (configmap_lookup|length==0)
+
+- name: Deploy and Reconcile Vault
+  include: deployment.yaml
+
+- name: Create service
+  include_tasks: service.yaml
+  when: (services_lookup|length==0)

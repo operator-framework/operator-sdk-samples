@@ -1,0 +1,14 @@
+---
+- resource:
+    apiVersion: v1
+    kind: Pod
+  result:
+    number: 6
+    status:
+      phase: Running
+
+- resource:
+    apiVersion: v1
+    kind: Service
+  result:
+    number: 2

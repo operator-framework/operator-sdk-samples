@@ -1,0 +1,5 @@
+---
+state: "present"
+
+etcd_cluster_size: 3
+etcd_repository: "quay.io/coreos/etcd"

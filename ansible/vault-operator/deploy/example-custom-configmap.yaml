@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-custom-configmap
+  namespace: default
+  labels:
+    app: vault
+    vault_cluster: example
+data:
+  "vault.hcl": |
+    telemetry {
+      statsd_address = "localhost:9125"
+    }
+
+    listener "tcp" {
+      address         = "0.0.0.0:8300"
+      cluster_address = "0.0.0.0:8201"
+      tls_cert_file   = "/run/vault/tls/server.crt"
+      tls_key_file    = "/run/vault/tls/server.key"
+    }
+
+    storage "etcd" {
+      address       = "https://example-etcd-client:2379"
+      etcd_api      = "v3"
+      ha_enabled    = "true"
+      tls_ca_file   = "/run/vault/tls/etcd-client-ca.crt"
+      tls_cert_file = "/run/vault/tls/etcd-client.crt"
+      tls_key_file  = "/run/vault/tls/etcd-client.key"
+      sync          = "false"
+    }

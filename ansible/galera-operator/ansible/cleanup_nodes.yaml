@@ -1,0 +1,4 @@
+- include_tasks: remove_node.yaml
+  args:
+    remove_pod_idx: "{{item|int}}"
+  with_sequence: "start={{galera_cluster_size|int + 1}} end={{pods_lookup|length}}"

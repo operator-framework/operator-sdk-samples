@@ -1,0 +1,41 @@
+---
+state: "present"
+
+rsa_key_size: 2048
+cert_common_name: "vault operator CA"
+cert_org: "coreos.com"
+cert_domain: "cluster.local"
+
+default_days: "365"
+cert_dir: "/tmp/{{ vault_cluster_name }}_vault_certs"
+
+# OpenSSL Conf
+ca_crt_conf_filename: "{{ cert_dir }}/ca_crt.conf"
+etcd_peer_crt_conf_filename: "{{ cert_dir }}/etcd_peer_crt.conf"
+etcd_client_crt_conf_filename: "{{ cert_dir }}/etcd_client_crt.conf"
+etcd_server_crt_conf_filename: "{{ cert_dir }}/etcd_server_crt.conf"
+vault_server_crt_conf_filename: "{{ cert_dir }}/vault_server_crt.conf"
+
+# Etcd Certs
+etcd_ca_crt_filename: "{{ cert_dir }}/etcd_ca_crt.pem"
+etcd_ca_key_filename: "{{ cert_dir }}/etcd_key.pem"
+
+etcd_peer_crt_filename: "{{ cert_dir }}/etcd_peer.crt"
+etcd_peer_csr_filename: "{{ cert_dir }}/etcd_peer.csr"
+etcd_peer_key_filename: "{{ cert_dir }}/etcd_peer.key"
+
+etcd_client_crt_filename: "{{ cert_dir }}/etcd_client.crt"
+etcd_client_csr_filename: "{{ cert_dir }}/etcd_client.csr"
+etcd_client_key_filename: "{{ cert_dir }}/etcd_client.key"
+
+etcd_server_crt_filename: "{{ cert_dir }}/etcd_server.crt"
+etcd_server_csr_filename: "{{ cert_dir }}/etcd_server.csr"
+etcd_server_key_filename: "{{ cert_dir }}/etcd_server.key"
+
+# Vault Certs
+vault_ca_crt_filename: "{{ cert_dir }}/vault_ca_crt.pem"
+vault_ca_key_filename: "{{ cert_dir }}/vault_key.pem"
+
+vault_server_crt_filename: "{{ cert_dir }}/vault_server.crt"
+vault_server_csr_filename: "{{ cert_dir }}/vault_server.csr"
+vault_server_key_filename: "{{ cert_dir }}/vault_server.key"
