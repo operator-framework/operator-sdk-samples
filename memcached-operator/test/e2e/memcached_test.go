@@ -20,7 +20,8 @@ import (
 	"testing"
 	"time"
 
-	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
+	apis "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
+	operator "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -30,19 +31,19 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Second * 30
+	timeout              = time.Second * 60
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 5
 )
 
 func TestMemcached(t *testing.T) {
-	memcachedList := &cachev1alpha1.MemcachedList{
+	memcachedList := &operator.MemcachedList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Memcached",
 			APIVersion: "cache.example.com/v1alpha1",
 		},
 	}
-	err := framework.AddToFrameworkScheme(cachev1alpha1.AddToScheme, memcachedList)
+	err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -59,7 +60,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 	// create memcached custom resource
-	exampleMemcached := &cachev1alpha1.Memcached{
+	exampleMemcached := &operator.Memcached{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Memcached",
 			APIVersion: "cache.example.com/v1alpha1",
@@ -68,7 +69,7 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 			Name:      "example-memcached",
 			Namespace: namespace,
 		},
-		Spec: cachev1alpha1.MemcachedSpec{
+		Spec: operator.MemcachedSpec{
 			Size: 3,
 		},
 	}
