@@ -28,6 +28,6 @@ rules:
 - apiGroups:
   - cache.example.com
   resources:
-  - memcacheds
+  - '*'
   verbs:
   - '*'

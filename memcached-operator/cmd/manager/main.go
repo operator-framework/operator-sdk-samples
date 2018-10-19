@@ -7,7 +7,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
 	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/controller"
-
 	k8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -28,7 +27,7 @@ func main() {
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Fatalf("Failed to get watch namespace: %v", err)
+		log.Fatalf("failed to get watch namespace: %v", err)
 	}
 
 	// TODO: Expose metrics port after SDK uses controller-runtime's dynamic client

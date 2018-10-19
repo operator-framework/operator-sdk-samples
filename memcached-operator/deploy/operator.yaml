@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,10 +12,11 @@ spec:
       labels:
         name: memcached-operator
     spec:
+      serviceAccountName: memcached-operator
       containers:
         - name: memcached-operator
           # Replace this with the built image name
-          image: quay.io/coreos/operator-sdk-dev:memcached-operator
+          image: REPLACE_IMAGE
           ports:
           - containerPort: 60000
             name: metrics

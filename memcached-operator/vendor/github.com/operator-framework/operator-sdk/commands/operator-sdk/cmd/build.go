@@ -22,10 +22,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
-	cmdError "github.com/operator-framework/operator-sdk/commands/operator-sdk/error"
-	"github.com/operator-framework/operator-sdk/pkg/generator"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
+	"github.com/operator-framework/operator-sdk/pkg/test"
 
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -117,14 +119,12 @@ func verifyDeploymentImage(yamlFile []byte, imageName string) error {
 	return errors.New(warningMessages)
 }
 
-func renderTestManifest(image string) {
+func verifyTestManifest(image string) {
 	namespacedBytes, err := ioutil.ReadFile(namespacedManBuild)
 	if err != nil {
 		log.Fatalf("could not read namespaced manifest: %v", err)
 	}
-	if err = generator.RenderTestYaml(cmdutil.GetConfig(), image); err != nil {
-		log.Fatalf("failed to generate deploy/test-pod.yaml: (%v)", err)
-	}
+
 	err = verifyDeploymentImage(namespacedBytes, image)
 	// the error from verifyDeploymentImage is just a warning, not fatal error
 	if err != nil {
@@ -133,48 +133,94 @@ func renderTestManifest(image string) {
 }
 
 const (
-	build      = "./tmp/build/build.sh"
-	configYaml = "./config/config.yaml"
+	mainGo = "./cmd/manager/main.go"
 )
 
 func buildFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		cmdError.ExitWithError(cmdError.ExitBadArgs, fmt.Errorf("build command needs exactly 1 argument"))
+		log.Fatalf("build command needs exactly 1 argument")
 	}
 
-	bcmd := exec.Command(build)
-	bcmd.Env = append(os.Environ(), fmt.Sprintf("TEST_LOCATION=%v", testLocationBuild))
-	bcmd.Env = append(bcmd.Env, fmt.Sprintf("ENABLE_TESTS=%v", enableTests))
-	o, err := bcmd.CombinedOutput()
+	cmdutil.MustInProjectRoot()
+	goBuildEnv := append(os.Environ(), "GOOS=linux", "GOARCH=amd64", "CGO_ENABLED=0")
+	wd, err := os.Getwd()
 	if err != nil {
-		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build: (%v)", string(o)))
+		log.Fatalf("could not identify current working directory: %v", err)
 	}
-	fmt.Fprintln(os.Stdout, string(o))
+
+	// Don't need to buld go code if Ansible Operator
+	if mainExists() {
+		managerDir := filepath.Join(cmdutil.CheckAndGetCurrPkg(), "cmd/manager")
+		outputBinName := filepath.Join(wd, "build/_output/bin", filepath.Base(wd))
+		buildCmd := exec.Command("go", "build", "-o", outputBinName, managerDir)
+		buildCmd.Env = goBuildEnv
+		o, err := buildCmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("failed to build operator binary: %v (%v)", err, string(o))
+		}
+		fmt.Fprintln(os.Stdout, string(o))
+	}
 
 	image := args[0]
 	baseImageName := image
 	if enableTests {
 		baseImageName += "-intermediate"
 	}
-	dbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/Dockerfile", "-t", baseImageName)
-	o, err = dbcmd.CombinedOutput()
+	dbcmd := exec.Command("docker", "build", ".", "-f", "build/Dockerfile", "-t", baseImageName)
+	o, err := dbcmd.CombinedOutput()
 	if err != nil {
 		if enableTests {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to build intermediate image for %s image: (%s)", image, string(o)))
+			log.Fatalf("failed to build intermediate image for %s image: %v (%s)", image, err, string(o))
 		} else {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %s: (%s)", image, string(o)))
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
 		}
 	}
 	fmt.Fprintln(os.Stdout, string(o))
 
 	if enableTests {
-		testDbcmd := exec.Command("docker", "build", ".", "-f", "tmp/build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
-		o, err = testDbcmd.CombinedOutput()
+		buildTestCmd := exec.Command("go", "test", "-c", "-o", filepath.Join(wd, "build/_output/bin", filepath.Base(wd)+"-test"), testLocationBuild+"/...")
+		buildTestCmd.Env = goBuildEnv
+		o, err := buildTestCmd.CombinedOutput()
 		if err != nil {
-			cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to output build image %v: (%v)", image, string(o)))
+			log.Fatalf("failed to build test binary: %v (%v)", err, string(o))
 		}
 		fmt.Fprintln(os.Stdout, string(o))
-		// create test-pod.yaml as well as check image name of deployments in namespaced manifest
-		renderTestManifest(image)
+		// if a user is using an older sdk repo as their library, make sure they have required build files
+		_, err = os.Stat("build/test-framework/Dockerfile")
+		if err != nil && os.IsNotExist(err) {
+
+			absProjectPath := cmdutil.MustGetwd()
+			cfg := &input.Config{
+				Repo:           cmdutil.CheckAndGetCurrPkg(),
+				AbsProjectPath: absProjectPath,
+				ProjectName:    filepath.Base(wd),
+			}
+
+			s := &scaffold.Scaffold{}
+			err = s.Execute(cfg,
+				&scaffold.TestFrameworkDockerfile{},
+				&scaffold.GoTestScript{},
+				&scaffold.TestPod{Image: image, TestNamespaceEnv: test.TestNamespaceEnv},
+			)
+			if err != nil {
+				log.Fatalf("build scaffold failed: (%v)", err)
+			}
+		}
+
+		testDbcmd := exec.Command("docker", "build", ".", "-f", "build/test-framework/Dockerfile", "-t", image, "--build-arg", "NAMESPACEDMAN="+namespacedManBuild, "--build-arg", "BASEIMAGE="+baseImageName)
+		o, err = testDbcmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("failed to output build image %s: %v (%s)", image, err, string(o))
+		}
+		fmt.Fprintln(os.Stdout, string(o))
+		// Check image name of deployments in namespaced manifest
+		verifyTestManifest(image)
 	}
+}
+
+func mainExists() bool {
+	if _, err := os.Stat(mainGo); err == nil {
+		return true
+	}
+	return false
 }
