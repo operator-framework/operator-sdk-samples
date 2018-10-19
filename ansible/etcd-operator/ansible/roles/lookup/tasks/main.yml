@@ -1,0 +1,21 @@
+---
+# tasks file for etcd-ansible-operator
+- name: set namespace
+  set_fact:
+    etcd_namespace: "{{ meta.namespace }}"
+  when: meta.namespace is not undefined
+
+- name: set cluster name label
+  set_fact:
+    etcd_cluster_name: "{{ meta.name }}"
+  when: meta.name is not undefined
+
+- name: lookup k8s cluster service
+  set_fact:
+    etcd_cluster_services: "{{ lookup('k8s', api_version='v1', kind='Service', namespace=etcd_namespace,
+                          label_selector='etcd_cluster='+ etcd_cluster_name + ',app=' + etcd_app_label) }}"
+
+- name: lookup k8s etcd cluster pods
+  set_fact:
+    etcd_cluster_pods: "{{ lookup('k8s', api_version='v1', kind='Pod', namespace=etcd_namespace,
+                      label_selector='etcd_cluster='+ etcd_cluster_name + ',app=' + etcd_app_label) }}"

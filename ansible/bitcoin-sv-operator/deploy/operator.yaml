@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bitd-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: bitd-operator
+  template:
+    metadata:
+      labels:
+        name: bitd-operator
+    spec:
+      containers:
+        - name: bitd-operator
+          image: docker.io/dymurray/bitd-operator
+          ports:
+          - containerPort: 60000
+            name: metrics
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "bitd-operator"

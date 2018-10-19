@@ -1,0 +1,7 @@
+- hosts: localhost
+  tasks:
+  - debug: msg="Running Etcd Ansible Operator Playbook"
+  - import_role:
+      name: "lookup"
+  - import_role:
+      name: "reconcile"

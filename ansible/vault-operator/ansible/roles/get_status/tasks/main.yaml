@@ -1,0 +1,49 @@
+---
+- set_fact:
+    label_selector_value: "vault_cluster={{ vault_cluster_name }},app={{ vault_app_name }}"
+
+- name: lookup k8s secrets
+  set_fact:
+    secrets_lookup: "{{ lookup('k8s', api_version='v1', kind='Secret', namespace=namespace,
+                          label_selector=label_selector_value) }}"
+
+- name: lookup k8s etcd cr
+  set_fact:
+    etcd_cr_lookup: "{{ lookup('k8s', api_version=etcd_api_version, kind='EtcdCluster',
+                    namespace=namespace, resource_name=etcd_cluster_name) }}"
+
+- name: lookup k8s configmap
+  set_fact:
+    configmap_lookup: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=namespace,
+                          resource_name=vault_configmap_name) }}"
+
+- name: lookup k8s Vault cluster service
+  set_fact:
+    services_lookup: "{{ lookup('k8s', api_version='v1', kind='Service', namespace=namespace,
+                          label_selector=label_selector_value) }}"
+
+- name: lookup k8s Vault cluster deployment
+  set_fact:
+    vault_deployment_lookup: "{{ lookup('k8s', api_version='extensions/v1beta1', kind='Deployment', namespace=namespace,
+                              resource_name=vault_cluster_name) }}"
+
+- name: lookup k8s VaultService (vault)
+  set_fact:
+    vault_service_lookup: "{{ lookup('k8s', api_version='vault.security.coreos.com/v1alpha1', kind='VaultService', namespace=namespace,
+                              resource_name=vault_cluster_name) }}"
+
+- debug: var=vault_service_lookup.spec.version
+- debug: var=vault_service_lookup.spec.nodes
+
+- name: Get currently deployed Vault image name
+  set_fact:
+    current_deployed_image: "{{ vault_deployment_lookup.spec.template.spec.containers['name'=='vault'].image }}"
+  when: vault_deployment_lookup.spec is defined
+
+- debug:
+    msg: "Vault Version has CHANGED to '{{ vault_version }}' - Currently at {{ current_deployed_image }}"
+  when: (current_deployed_image is defined) and (current_deployed_image != vault_image_name)
+
+- debug:
+    msg: "Vault Nodes has CHANGED - updating deployment.spec.replicas value"
+  when: (vault_deployment_lookup.spec is defined) and (vault_deployment_lookup.spec.replicas != vault_replica_size)

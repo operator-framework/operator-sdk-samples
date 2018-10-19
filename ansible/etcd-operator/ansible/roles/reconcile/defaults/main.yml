@@ -1,0 +1,41 @@
+---
+# defaults file for etcd-ansible-operator
+
+image: "{{ 'quay.io/coreos/etcd:v' + version | string }}"
+etcd_namespace: "{{ meta.namespace }}"
+etcd_client_port: 2379
+etcd_peer_port: 2380
+etcd_app_label: "etcd"
+etcd_cluster_name: "example-etcd-cluster"
+etcd_cluster_pods: []
+etcd_volume_mounts:
+- name: "etcd-data"
+  mountPath: "/var/etcd"
+etcd_volumes:
+- name: "etcd-data"
+  source:
+    emptyDir: {}
+
+
+etcd_new_members: []
+etcd_remove_members: []
+etcd_peer_urls: []
+etcd_new_peer_urls: []
+etcd_cluster_phase: "existing"
+etcd_peer_protocol: "http://"
+etcd_client_protocol: "http://"
+etcd_peer_tls_dir: "/etc/etcdtls/member/peer-tls"
+etcd_server_tls_dir: "/etc/etcdtls/member/server-tls"
+etcd_volume_mounts:
+- name: "etcd-data"
+  mountPath: "/var/etcd"
+etcd_volumes:
+- name: "etcd-data"
+  source:
+    emptyDir: {}
+etcd_peer_tls_commands: []
+etcd_client_tls_commands: []
+
+etcd_secure_client: "absent"
+etcd_secure_peer: "absent"
+etcd_remove_pods: []

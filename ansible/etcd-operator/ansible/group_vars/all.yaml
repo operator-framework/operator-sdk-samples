@@ -1,0 +1,12 @@
+#---
+#meta:
+#  name: "example-etcd-cluster"
+#  namespace: "default"
+#size: 3
+#_tls:
+#  static:
+#    member:
+#      peer_secret: etcd-peer-tls
+#      server_secret: etcd-server-tls
+#    operator_secret: etcd-client-tls
+image: "{{ 'quay.io/coreos/etcd:v' + version|string }}"

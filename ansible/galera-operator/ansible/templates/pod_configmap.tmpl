@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ galera_configmap_name }}-{{galera_node_name}}"
+  namespace: "{{ namespace }}"
+  labels:
+    app: "{{ galera_app_name }}"
+    galera_cluster: "{{ galera_cluster_name }}"
+data:
+  mysql-entrypoint: |
+    #!/bin/bash
+    if [ "${1:0:1}" = '-' ]; then
+      set -- mysqld "$@"
+    fi
+    DATADIR=/var/lib/mysql
+    if [ ! -d "$DATADIR/mysql" ]; then
+      mkdir -p "$DATADIR"
+      chown -R mysql:mysql $DATADIR
+
+      echo 'Initializing database'
+      mysql_install_db --datadir="$DATADIR" --rpm "${@:2}"
+      echo 'Database initialized'
+    fi
+    "$@" --skip-networking --socket="/var/lib/mysql/mysql.sock" &
+    pid="$!"
+    for i in {30..0}; do
+      if echo 'SELECT 1' | mysql -u root -S /var/lib/mysql/mysql.sock &> /dev/null; then
+        break
+      fi
+      echo 'MySQL init process in progress...'
+      sleep 1
+    done
+    if [ "$i" = 0 ]; then
+      echo >&2 'MySQL init process failed.'
+      exit 1
+    fi
+    mysql -u root -S /var/lib/mysql/mysql.sock <<-EOSQL
+      CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '' ;
+      GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
+      FLUSH PRIVILEGES ;
+    EOSQL
+    if ! kill -s TERM "$pid" || ! wait "$pid"; then
+      echo >&2 'MySQL init process failed.'
+      exit 1
+    fi
+    exec "$@"
+  mysql-cnf-general: |
+    [mysqld]
+    datadir=/var/lib/mysql
+    socket=/var/lib/mysql/mysql.sock
+    user=mysql
+    binlog_format=ROW
+    bind-address=0.0.0.0
+    default_storage_engine=innodb
+    innodb_autoinc_lock_mode=2
+    innodb_flush_log_at_trx_commit=0
+    innodb_buffer_pool_size=122M
+    wsrep_on=ON
+    wsrep_provider=/usr/lib/libgalera_smm.so
+    wsrep_provider_options="gcache.size=300M; gcache.page_size=300M;"
+    wsrep_cluster_name="{{galera_cluster_name}}"
+    #wsrep_cluster_address="gcomm://{{node_list|join(',')}}"
+    wsrep_cluster_address="gcomm://{{pods_lookup|map(attribute='status.podIP')|join(',')}}"
+    wsrep_node_name={{galera_node_name + '-service'}}
+    wsrep_sst_method=rsync
+    [mysql_safe]
+    log-error=/var/log/mysqld.log
+    pid-file=/var/run/mysqld/mysqld.pid

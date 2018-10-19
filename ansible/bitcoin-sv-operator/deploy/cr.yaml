@@ -1,0 +1,4 @@
+apiVersion: "bitcoin-sv.example.com/v1alpha1"
+kind: "Bitd"
+metadata:
+  name: "example"

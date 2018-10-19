@@ -1,0 +1,18 @@
+- hosts: localhost
+  tasks:
+  - debug: msg="Running Vault Ansible Operator Playbook"
+  - import_role:
+      name: "get_status"
+  - import_role:
+      name: "tls_certs"
+  - import_role:
+      name: "deploy_etcd"
+    when: (etcd_cr_lookup|length==0)
+  - import_role:
+      name: "deploy_vault"
+    when: (etcd_cr_lookup|length!=0)
+  - debug: msg="vault_replica_size - {{ vault_replica_size }}"
+  - debug: msg="vault_version - {{ vault_version }}"
+  - debug: msg="vault_configmap_name - {{ vault_configmap_name }}"
+  - debug: msg="vault_client_port_num - {{ vault_client_port_num }}"
+  - debug: msg="vault_client_port_name - {{ vault_client_port_name }}"

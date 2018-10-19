@@ -1,0 +1,57 @@
+---
+
+- name: define variable for members.
+  set_fact:
+    etcd_members: []
+    etcd_peer_urls: []
+    etcd_cluster_phase: "new"
+
+- name: create client service
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ etcd_cluster_name }}-client"
+        namespace: "{{ etcd_namespace }}"
+        labels:
+          app: "{{ etcd_app_label }}"
+          etcd_cluster: "{{ etcd_cluster_name }}"
+      spec:
+        selector:
+          etcd_cluster: "{{ etcd_cluster_name }}"
+          app: "{{ etcd_app_label }}"
+        clusterIP: ""
+        ports:
+        - protocol: TCP
+          targetPort: "{{ etcd_client_port }}"
+          name: client
+          port: "{{ etcd_client_port }}"
+
+- name: create peer_service
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: "{{ etcd_cluster_name }}"
+        namespace: "{{ etcd_namespace }}"
+        labels:
+          app: "{{ etcd_app_label }}"
+          etcd_cluster: "{{ etcd_cluster_name }}"
+      spec:
+        selector:
+          etcd_cluster: "{{ etcd_cluster_name }}"
+          app: "{{ etcd_app_label }}"
+        clusterIP: None
+        ports:
+        - protocol: TCP
+          targetPort: "{{ etcd_client_port }}"
+          name: client
+          port: "{{ etcd_client_port}}"
+        - protocol: TCP
+          targetPort: "{{ etcd_peer_port }}"
+          name: peer
+          port: "{{ etcd_peer_port}}"
