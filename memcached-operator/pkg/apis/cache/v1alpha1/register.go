@@ -1,4 +1,3 @@
-
 // NOTE: Boilerplate only.  Ignore this file.
 
 // Package v1alpha1 contains API Schema definitions for the cache v1alpha1 API group
