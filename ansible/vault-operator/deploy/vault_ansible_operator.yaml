@@ -12,6 +12,7 @@ spec:
       labels:
         name: vault-ansible-operator
     spec:
+      serviceAccountName: vault-ansible-operator
       containers:
         - name: vault-ansible-operator
           image: quay.io/jkig/vault-ansible-operator:latest

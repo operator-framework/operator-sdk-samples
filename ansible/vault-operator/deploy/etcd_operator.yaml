@@ -11,6 +11,7 @@ spec:
       labels:
         name: etcd-operator
     spec:
+      serviceAccountName: vault-ansible-operator
       containers:
       - name: etcd-operator
         image: quay.io/coreos/etcd-operator:v0.8.3

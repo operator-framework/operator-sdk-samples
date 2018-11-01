@@ -1,7 +1,7 @@
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  name: etcd-operator-role
+  name: etcd-operator
 rules:
 - apiGroups:
   - etcd.database.coreos.com
@@ -42,17 +42,3 @@ rules:
   verbs:
   - "*"
 
----
-
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: etcd-operator-rolebinding
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: etcd-operator-role
-  apiGroup: rbac.authorization.k8s.io

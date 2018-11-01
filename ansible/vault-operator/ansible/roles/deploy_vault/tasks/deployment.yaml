@@ -28,6 +28,7 @@
               app: "{{ vault_app_name }}"
               vault_cluster: "{{ vault_cluster_name }}"
           spec:
+            serviceAccountName: "{{ vault_service_account_name }}"
             containers:
             - name: vault
               image: "{{ vault_image_name }}"
