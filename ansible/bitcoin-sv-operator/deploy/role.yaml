@@ -1,5 +1,5 @@
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: bitd-operator
 rules:
@@ -31,17 +31,3 @@ rules:
   verbs:
   - "*"
 
----
-
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: default-account-bitd-operator
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: bitd-operator
-  apiGroup: rbac.authorization.k8s.io
