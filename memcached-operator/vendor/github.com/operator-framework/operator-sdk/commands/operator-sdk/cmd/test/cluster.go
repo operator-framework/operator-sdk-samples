@@ -17,18 +17,19 @@ package cmdtest
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 type testClusterConfig struct {
@@ -47,13 +48,8 @@ func NewTestClusterCmd() *cobra.Command {
 		Short: "Run End-To-End tests using image with embedded test binary",
 		RunE:  testClusterFunc,
 	}
-	defaultKubeConfig := ""
-	homedir, ok := os.LookupEnv("HOME")
-	if ok {
-		defaultKubeConfig = homedir + "/.kube/config"
-	}
-	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "default", "Namespace to run tests in")
-	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", defaultKubeConfig, "Kubeconfig path")
+	testCmd.Flags().StringVar(&tcConfig.namespace, "namespace", "", "Namespace to run tests in")
+	testCmd.Flags().StringVar(&tcConfig.kubeconfig, "kubeconfig", "", "Kubeconfig path")
 	testCmd.Flags().StringVar(&tcConfig.imagePullPolicy, "image-pull-policy", "Always", "Set test pod image pull policy. Allowed values: Always, Never")
 	testCmd.Flags().StringVar(&tcConfig.serviceAccount, "service-account", "default", "Service account to run tests on")
 	testCmd.Flags().IntVar(&tcConfig.pendingTimeout, "pending-timeout", 60, "Timeout in seconds for testing pod to stay in pending state (default 60s)")
@@ -67,6 +63,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
 	}
+
+	log.Info("Testing operator in cluster.")
+
 	var pullPolicy v1.PullPolicy
 	if strings.ToLower(tcConfig.imagePullPolicy) == "always" {
 		pullPolicy = v1.PullAlways
@@ -89,7 +88,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				Name:            "operator-test",
 				Image:           args[0],
 				ImagePullPolicy: pullPolicy,
-				Command:         []string{"/go-test.sh"},
+				Command:         []string{"/" + scaffold.GoTestScriptFile},
 				Env: []v1.EnvVar{{
 					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
@@ -97,9 +96,12 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			}},
 		},
 	}
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", tcConfig.kubeconfig)
+	kubeconfig, defaultNamespace, err := k8sInternal.GetKubeconfigAndNamespace(tcConfig.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get kubeconfig: %v", err)
+	}
+	if tcConfig.namespace == "" {
+		tcConfig.namespace = defaultNamespace
 	}
 	kubeclient, err := kubernetes.NewForConfig(kubeconfig)
 	if err != nil {
@@ -112,7 +114,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	defer func() {
 		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
 		if err != nil {
-			fmt.Printf("Warning: failed to delete test pod")
+			log.Warn("failed to delete test pod")
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
@@ -142,7 +144,7 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			time.Sleep(time.Second * 5)
 			continue
 		} else if testPod.Status.Phase == v1.PodSucceeded {
-			fmt.Printf("Test Successfully Completed\n")
+			log.Info("Cluster test successfully completed.")
 			return nil
 		} else if testPod.Status.Phase == v1.PodFailed {
 			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})

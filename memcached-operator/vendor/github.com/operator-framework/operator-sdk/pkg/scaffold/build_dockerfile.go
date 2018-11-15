@@ -20,19 +20,23 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const DockerfileFile = "Dockerfile"
+
 type Dockerfile struct {
 	input.Input
 }
 
 func (s *Dockerfile) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = filepath.Join(buildDir, dockerfileFile)
+		s.Path = filepath.Join(BuildDir, DockerfileFile)
 	}
 	s.TemplateBody = dockerfileTmpl
 	return s.Input, nil
 }
 
-const dockerfileTmpl = `FROM alpine:3.6
+const dockerfileTmpl = `FROM alpine:3.8
+
+RUN apk upgrade --update --no-cache
 
 USER nobody
 
