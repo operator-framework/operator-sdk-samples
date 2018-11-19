@@ -36,7 +36,7 @@ func (s *Crd) GetInput() (input.Input, error) {
 			strings.ToLower(s.Resource.Group),
 			strings.ToLower(s.Resource.Version),
 			s.Resource.LowerKind)
-		s.Path = filepath.Join(crdsDir, fileName)
+		s.Path = filepath.Join(CrdsDir, fileName)
 	}
 	s.TemplateBody = crdTemplate
 	return s.Input, nil
@@ -55,5 +55,5 @@ spec:
     plural: {{ .Resource.Resource }}
     singular: {{ .Resource.LowerKind }}
   scope: Namespaced
-  version: v1alpha1
+  version: {{ .Resource.Version }}
 `

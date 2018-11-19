@@ -18,13 +18,15 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/scaffold/input"
 )
 
+const GopkgTomlFile = "Gopkg.toml"
+
 type GopkgToml struct {
 	input.Input
 }
 
 func (s *GopkgToml) GetInput() (input.Input, error) {
 	if s.Path == "" {
-		s.Path = gopkgtomlFile
+		s.Path = GopkgTomlFile
 	}
 	s.TemplateBody = gopkgTomlTmpl
 	return s.Input, nil
@@ -75,7 +77,7 @@ required = [
   name = "github.com/operator-framework/operator-sdk"
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
-  # version = "=v0.0.6" #osdk_version_annotation
+  # version = "=v0.1.1" #osdk_version_annotation
 
 [prune]
   go-tests = true

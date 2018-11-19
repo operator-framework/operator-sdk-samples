@@ -2,7 +2,6 @@ package memcached
 
 import (
 	"context"
-	"log"
 	"reflect"
 
 	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
@@ -20,8 +19,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+var log = logf.Log.WithName("controller_memcached")
 
 // Add creates a new Memcached Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -80,7 +82,8 @@ type ReconcileMemcached struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.Printf("Reconciling Memcached %s/%s\n", request.Namespace, request.Name)
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling Memcached.")
 
 	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
@@ -90,11 +93,11 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			log.Printf("Memcached %s/%s not found. Ignoring since object must be deleted\n", request.Namespace, request.Name)
+			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		log.Printf("Failed to get Memcached: %v", err)
+		reqLogger.Error(err, "Failed to get Memcached.")
 		return reconcile.Result{}, err
 	}
 
@@ -104,16 +107,16 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.deploymentForMemcached(memcached)
-		log.Printf("Creating a new Deployment %s/%s\n", dep.Namespace, dep.Name)
+		reqLogger.Info("Creating a new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
-			log.Printf("Failed to create new Deployment: %v\n", err)
+			reqLogger.Error(err, "Failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Printf("Failed to get Deployment: %v\n", err)
+		reqLogger.Error(err, "Failed to get Deployment.")
 		return reconcile.Result{}, err
 	}
 
@@ -123,7 +126,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		found.Spec.Replicas = &size
 		err = r.client.Update(context.TODO(), found)
 		if err != nil {
-			log.Printf("Failed to update Deployment: %v\n", err)
+			reqLogger.Error(err, "Failed to update Deployment.", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
 			return reconcile.Result{}, err
 		}
 		// Spec updated - return and requeue
@@ -134,10 +137,23 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	// List the pods for this memcached's deployment
 	podList := &corev1.PodList{}
 	labelSelector := labels.SelectorFromSet(labelsForMemcached(memcached.Name))
-	listOps := &client.ListOptions{Namespace: memcached.Namespace, LabelSelector: labelSelector}
+	listOps := &client.ListOptions{
+		Namespace:     memcached.Namespace,
+		LabelSelector: labelSelector,
+		// HACK: due to a fake client bug, ListOptions.Raw.TypeMeta must be
+		// explicitly populated for testing.
+		//
+		// See https://github.com/kubernetes-sigs/controller-runtime/issues/168
+		Raw: &metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Memcached",
+				APIVersion: cachev1alpha1.SchemeGroupVersion.Version,
+			},
+		},
+	}
 	err = r.client.List(context.TODO(), listOps, podList)
 	if err != nil {
-		log.Printf("Failed to list pods: %v", err)
+		reqLogger.Error(err, "Failed to list pods.", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
 		return reconcile.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
@@ -147,7 +163,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		memcached.Status.Nodes = podNames
 		err := r.client.Update(context.TODO(), memcached)
 		if err != nil {
-			log.Printf("failed to update memcached status: %v", err)
+			reqLogger.Error(err, "Failed to update Memcached status.")
 			return reconcile.Result{}, err
 		}
 	}

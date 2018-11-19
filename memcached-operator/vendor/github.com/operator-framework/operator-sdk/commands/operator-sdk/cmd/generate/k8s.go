@@ -17,13 +17,14 @@ package generate
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd/cmdutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -40,26 +41,31 @@ to comply with kube-API requirements.
 
 func k8sFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 0 {
-		log.Fatalf("k8s command doesn't accept any arguments.")
+		log.Fatal("k8s command doesn't accept any arguments")
 	}
+
+	// Only Go projects can generate k8s deepcopy code.
+	projutil.MustGoProjectCmd(cmd)
+
 	K8sCodegen()
 }
 
 // K8sCodegen performs deepcopy code-generation for all custom resources under pkg/apis
 func K8sCodegen() {
-	cmdutil.MustInProjectRoot()
-	repoPkg := cmdutil.CheckAndGetCurrPkg()
+
+	projutil.MustInProjectRoot()
+	repoPkg := projutil.CheckAndGetProjectGoPkg()
 	outputPkg := filepath.Join(repoPkg, "pkg/generated")
-	apisPkg := filepath.Join(repoPkg, "pkg/apis")
+	apisPkg := filepath.Join(repoPkg, scaffold.ApisDir)
 	groupVersions, err := parseGroupVersions()
 	if err != nil {
 		log.Fatalf("failed to parse group versions: (%v)", err)
 	}
 
-	fmt.Fprintf(os.Stdout, "Running code-generation for custom resource group versions: [%s]\n", groupVersions)
+	log.Infof("Running code-generation for Custom Resource group versions: [%s]\n", groupVersions)
+
 	// TODO: Replace generate-groups.sh by building the vendored generators(deepcopy, lister etc)
 	// and running them directly
-	// TODO: remove dependency on boilerplate.go.txt
 	genGroupsCmd := "vendor/k8s.io/code-generator/generate-groups.sh"
 	args := []string{
 		"deepcopy",
@@ -67,11 +73,15 @@ func K8sCodegen() {
 		apisPkg,
 		groupVersions,
 	}
-	out, err := exec.Command(genGroupsCmd, args...).CombinedOutput()
+	cgCmd := exec.Command(genGroupsCmd, args...)
+	cgCmd.Stdout = os.Stdout
+	cgCmd.Stderr = os.Stderr
+	err = cgCmd.Run()
 	if err != nil {
 		log.Fatalf("failed to perform code-generation: (%v)", err)
 	}
-	fmt.Fprintln(os.Stdout, string(out))
+
+	log.Info("Code-generation complete.")
 }
 
 // getGroupVersions parses the layout of pkg/apis to return the API groups and versions
@@ -79,27 +89,32 @@ func K8sCodegen() {
 // as required by the generate-groups.sh script
 func parseGroupVersions() (string, error) {
 	var groupVersions string
-	groups, err := ioutil.ReadDir(filepath.Join("pkg", "apis"))
+	groups, err := ioutil.ReadDir(scaffold.ApisDir)
 	if err != nil {
 		return "", fmt.Errorf("could not read pkg/apis directory to find api Versions: %v", err)
 	}
+
 	for _, g := range groups {
-		// TODO: Ignore other files besides pkg/apis/group/version
-		groupVersion := g.Name() + ":"
 		if g.IsDir() {
-			versions, err := ioutil.ReadDir(filepath.Join("pkg", "apis", g.Name()))
+			groupDir := filepath.Join(scaffold.ApisDir, g.Name())
+			versions, err := ioutil.ReadDir(groupDir)
 			if err != nil {
-				return "", fmt.Errorf("could not read pkg/apis/%s directory to find api Versions: %v", g.Name(), err)
+				return "", fmt.Errorf("could not read %s directory to find api Versions: %v", groupDir, err)
 			}
-			// TODO: regex check to ensure only dirs with acceptable version names are picked
-			// e.g v1,v1alpha1,v1beta1 etc
+
+			groupVersion := ""
 			for _, v := range versions {
-				if v.IsDir() {
+				if v.IsDir() && scaffold.ResourceVersionRegexp.MatchString(v.Name()) {
 					groupVersion = groupVersion + v.Name() + ","
 				}
 			}
+			groupVersions += fmt.Sprintf("%s:%s ", g.Name(), groupVersion)
 		}
-		groupVersions = groupVersions + groupVersion + " "
 	}
+
+	if groupVersions == "" {
+		return "", fmt.Errorf("no groups or versions found in %s", scaffold.ApisDir)
+	}
+
 	return groupVersions, nil
 }

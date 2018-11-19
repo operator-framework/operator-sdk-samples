@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -78,8 +79,15 @@ func (c *fakeClient) Get(ctx context.Context, key client.ObjectKey, obj runtime.
 }
 
 func (c *fakeClient) List(ctx context.Context, opts *client.ListOptions, list runtime.Object) error {
-	gvk := opts.Raw.TypeMeta.GroupVersionKind()
+	gvk, err := apiutil.GVKForObject(list, scheme.Scheme)
+	if err != nil {
+		return err
+	}
+	if strings.HasSuffix(gvk.Kind, "List") {
+		gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
+	}
 	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
+
 	o, err := c.tracker.List(gvr, gvk, opts.Namespace)
 	if err != nil {
 		return err
