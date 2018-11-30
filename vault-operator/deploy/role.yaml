@@ -1,11 +1,30 @@
-apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
+apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  creationTimestamp: null
   name: vault-operator
 rules:
 - apiGroups:
-  - ""
+  - etcd.database.coreos.com
+  resources:
+  - etcdclusters
+  - etcdbackups
+  - etcdrestores
+  verbs:
+  - "*"
+- apiGroups:
+  - vault.security.coreos.com
+  resources:
+  - vaultservices
+  verbs:
+  - "*"
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - "*"
+- apiGroups:
+  - "" # "" indicates the core API group
   resources:
   - pods
   - services
@@ -15,27 +34,10 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - '*'
+  - "*"
 - apiGroups:
   - apps
   resources:
   - deployments
-  - daemonsets
-  - replicasets
-  - statefulsets
   verbs:
-  - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
-- apiGroups:
-  - vault.security.coreos.com
-  resources:
-  - '*'
-  - vaultservices
-  verbs:
-  - '*'
+  - "*"

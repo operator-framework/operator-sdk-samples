@@ -106,10 +106,10 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: default-account-vault-operator
+  name: vault-operator
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: vault-operator
 roleRef:
   kind: Role
   name: vault-operator
