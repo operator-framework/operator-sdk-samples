@@ -1,0 +1,7 @@
+apiVersion: vault.security.coreos.com/v1alpha1
+kind: VaultService
+metadata:
+  name: example-vaultservice
+spec:
+  # Add fields here
+  size: 3

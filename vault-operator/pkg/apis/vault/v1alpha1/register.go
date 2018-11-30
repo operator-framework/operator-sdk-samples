@@ -1,39 +1,19 @@
+// NOTE: Boilerplate only.  Ignore this file.
+
+// Package v1alpha1 contains API Schema definitions for the vault v1alpha1 API group
+// +k8s:deepcopy-gen=package,register
+// +groupName=vault.security.coreos.com
 package v1alpha1
 
 import (
-	sdkK8sutil "github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
-
-	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-)
-
-const (
-	version          = "v1alpha1"
-	groupName        = "vault.security.coreos.com"
-	VaultServiceKind = "VaultService"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
 
 var (
-	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	AddToScheme   = SchemeBuilder.AddToScheme
-	// SchemeGroupVersion is the group version used to register these objects.
-	SchemeGroupVersion = schema.GroupVersion{Group: groupName, Version: version}
+	// SchemeGroupVersion is group version used to register these objects
+	SchemeGroupVersion = schema.GroupVersion{Group: "vault.security.coreos.com", Version: "v1alpha1"}
+
+	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
+	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
-
-func init() {
-	sdkK8sutil.AddToSDKScheme(AddToScheme)
-	// register etcd operator's scheme
-	sdkK8sutil.AddToSDKScheme(eopapi.AddToScheme)
-}
-
-// addKnownTypes adds the set of types defined in this package to the supplied scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&VaultService{},
-		&VaultServiceList{},
-	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
-}
