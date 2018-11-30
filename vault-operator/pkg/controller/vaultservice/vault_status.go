@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	vaultapi "github.com/hashicorp/vault/api"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (r *ReconcileVaultService) updateVaultStatus(vr *vaultv1alpha1.VaultService, status *vaultv1alpha1.VaultServiceStatus) error {
@@ -30,7 +30,7 @@ func (r *ReconcileVaultService) updateVaultStatus(vr *vaultv1alpha1.VaultService
 // getVaultStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
 // and it only succeeds if all of the nodes from vault cluster are reachable.
 func (r *ReconcileVaultService) getVaultStatus(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (*vaultv1alpha1.VaultServiceStatus, error) {
-	pods := &v1.PodList{
+	pods := &corev1.PodList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
@@ -61,7 +61,7 @@ func (r *ReconcileVaultService) getVaultStatus(vr *vaultv1alpha1.VaultService, n
 	for _, p := range pods.Items {
 		// If a pod is terminating, then we can't access the corresponding vault node's status.
 		// so we break from here and return an error.
-		if p.Status.Phase != v1.PodRunning || p.DeletionTimestamp != nil {
+		if p.Status.Phase != corev1.PodRunning || p.DeletionTimestamp != nil {
 			return nil, errors.New("vault pod is terminating")
 		}
 
@@ -118,7 +118,7 @@ func NewVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig)
 // VaultTLSFromSecret reads Vault CR's TLS secret and converts it into a vault client's TLS config struct.
 func (r *ReconcileVaultService) vaultTLSFromSecret(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (*vaultapi.TLSConfig, error) {
 	cs := vr.Spec.TLS.Static.ClientSecret
-	se := &v1.Secret{
+	se := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
@@ -152,7 +152,7 @@ func (r *ReconcileVaultService) vaultTLSFromSecret(vr *vaultv1alpha1.VaultServic
 }
 
 // PodDNSName constructs the dns name on which a pod can be addressed
-func PodDNSName(p v1.Pod) string {
+func PodDNSName(p corev1.Pod) string {
 	podIP := strings.Replace(p.Status.PodIP, ".", "-", -1)
 	return fmt.Sprintf("%s.%s.pod", podIP, p.Namespace)
 }

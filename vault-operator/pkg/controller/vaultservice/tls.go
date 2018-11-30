@@ -9,7 +9,7 @@ import (
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/tls"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,7 +31,7 @@ func (r *ReconcileVaultService) prepareDefaultVaultTLSSecrets(vr *vaultv1alpha1.
 
 	// if TLS spec doesn't exist or secrets doesn't exist, then we can go create secrets.
 	if vaultv1alpha1.IsTLSConfigured(vr.Spec.TLS) {
-		se := &v1.Secret{
+		se := &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Secret",
 				APIVersion: "v1",
@@ -74,7 +74,7 @@ func (r *ReconcileVaultService) prepareDefaultVaultTLSSecrets(vr *vaultv1alpha1.
 }
 
 // newVaultServerTLSSecret returns a secret containing vault server TLS assets
-func newVaultServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newVaultServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*corev1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "vault server", vaultv1alpha1.DefaultVaultServerTLSSecretName(vr.Name),
 		[]string{
 			"localhost",
@@ -91,8 +91,8 @@ func newVaultServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateK
 
 // newVaultClientTLSSecret returns a secret containing vault client TLS assets.
 // The client key and certificate are not generated since clients are not authenticated at the server
-func newVaultClientTLSSecret(vr *vaultv1alpha1.VaultService, caCrt *x509.Certificate) *v1.Secret {
-	return &v1.Secret{
+func newVaultClientTLSSecret(vr *vaultv1alpha1.VaultService, caCrt *x509.Certificate) *corev1.Secret {
+	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
@@ -117,7 +117,7 @@ func (r *ReconcileVaultService) prepareEtcdTLSSecrets(vr *vaultv1alpha1.VaultSer
 		}
 	}()
 
-	se := &v1.Secret{
+	se := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
@@ -193,7 +193,7 @@ func newCACert() (*rsa.PrivateKey, *x509.Certificate, error) {
 }
 
 // newEtcdClientTLSSecret returns a secret containing etcd client TLS assets
-func newEtcdClientTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdClientTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*corev1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd client", EtcdClientTLSSecretName(vr.Name), nil,
 		map[string]string{
 			"key":  "etcd-client.key",
@@ -203,7 +203,7 @@ func newEtcdClientTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKe
 }
 
 // newEtcdPeerTLSSecret returns a secret containing etcd peer TLS assets
-func newEtcdPeerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdPeerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*corev1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd peer", etcdPeerTLSSecretName(vr.Name),
 		[]string{
 			fmt.Sprintf("*.%s.%s.svc", EtcdNameForVault(vr.Name), vr.Namespace),
@@ -218,7 +218,7 @@ func newEtcdPeerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey,
 
 // newTLSSecret is a common utility for creating a secret containing TLS assets.
 func newTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate, commonName, secretName string,
-	addrs []string, fieldMap map[string]string) (*v1.Secret, error) {
+	addrs []string, fieldMap map[string]string) (*corev1.Secret, error) {
 	tc := tls.CertConfig{
 		CommonName:   commonName,
 		Organization: orgForTLSCert,
@@ -228,7 +228,7 @@ func newTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *
 	if err != nil {
 		return nil, fmt.Errorf("new TLS secret failed: %v", err)
 	}
-	secret := &v1.Secret{
+	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
@@ -260,7 +260,7 @@ func newKeyAndCert(caCert *x509.Certificate, caPrivKey *rsa.PrivateKey, config t
 }
 
 // newEtcdServerTLSSecret returns a secret containing etcd server TLS assets
-func newEtcdServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*corev1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd server", etcdServerTLSSecretName(vr.Name),
 		[]string{
 			"localhost",

@@ -3,5 +3,5 @@ kind: VaultService
 metadata:
   name: example-vaultservice
 spec:
-  # Add fields here
-  size: 3
+  nodes: 2
+  version: 0.9.1-0

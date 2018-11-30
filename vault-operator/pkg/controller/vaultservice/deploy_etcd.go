@@ -7,7 +7,7 @@ import (
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -41,7 +41,7 @@ func (r *ReconcileVaultService) deployEtcdCluster(v *vaultv1alpha1.VaultService)
 				},
 			},
 			Pod: &eopapi.PodPolicy{
-				EtcdEnv: []v1.EnvVar{{
+				EtcdEnv: []corev1.EnvVar{{
 					Name:  "ETCD_AUTO_COMPACTION_RETENTION",
 					Value: "1",
 				}},

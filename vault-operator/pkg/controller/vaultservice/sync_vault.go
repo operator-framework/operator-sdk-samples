@@ -8,7 +8,7 @@ import (
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -104,7 +104,7 @@ func (r *ReconcileVaultService) syncUpgrade(vr *vaultv1alpha1.VaultService, stat
 		// This will send SIGTERM to the active Vault pod. It should release HA lock and exit properly.
 		// If it failed for some reason, kubelet will send SIGKILL after default grace period (30s) eventually.
 		// It take longer but the the lock will get released eventually on failure case.
-		p := &v1.Pod{
+		p := &corev1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Pod",
 				APIVersion: "v1",

@@ -8,7 +8,7 @@ import (
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,7 +31,7 @@ const (
 // - Otherwise, creates a new configmap "${vaultName}-copy" with our section.
 func (r *ReconcileVaultService) prepareVaultConfig(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) error {
 	var cfgData string
-	cm := &v1.ConfigMap{
+	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
