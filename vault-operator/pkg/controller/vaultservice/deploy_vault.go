@@ -1,14 +1,14 @@
-package vault
+package vaultservice
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -36,28 +36,28 @@ const (
 //
 // deployVault is idempotent. If an object already exists, this function will ignore creating
 // it and return no error. It is safe to retry on this function.
-func deployVault(v *api.VaultService) error {
+func (r *ReconcileVaultService) deployVault(v *vaultv1alpha1.VaultService) error {
 	selector := LabelsForVault(v.GetName())
 
-	podTempl := v1.PodTemplateSpec{
+	podTempl := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.GetName(),
 			Namespace: v.GetNamespace(),
 			Labels:    selector,
 		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{vaultContainer(v), statsdExporterContainer()},
-			Volumes: []v1.Volume{{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{vaultContainer(v), statsdExporterContainer()},
+			Volumes: []corev1.Volume{{
 				Name: vaultConfigVolName,
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
 							Name: configMapNameForVault(v),
 						},
 					},
 				},
 			}},
-			SecurityContext: &v1.PodSecurityContext{
+			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser:    func(i int64) *int64 { return &i }(9000),
 				RunAsNonRoot: func(b bool) *bool { return &b }(true),
 				FSGroup:      func(i int64) *int64 { return &i }(9000),
@@ -95,12 +95,12 @@ func deployVault(v *api.VaultService) error {
 		},
 	}
 	addOwnerRefToObject(d, asOwner(v))
-	err := sdk.Create(d)
+	err := r.client.Create(context.TODO(), d)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 
-	svc := &v1.Service{
+	svc := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
@@ -110,29 +110,29 @@ func deployVault(v *api.VaultService) error {
 			Namespace: v.GetNamespace(),
 			Labels:    selector,
 		},
-		Spec: v1.ServiceSpec{
+		Spec: corev1.ServiceSpec{
 			Selector: selector,
-			Ports: []v1.ServicePort{
+			Ports: []corev1.ServicePort{
 				{
 					Name:     vaultClientPortName,
-					Protocol: v1.ProtocolTCP,
+					Protocol: corev1.ProtocolTCP,
 					Port:     vaultClientPort,
 				},
 				{
 					Name:     vaultClusterPortName,
-					Protocol: v1.ProtocolTCP,
+					Protocol: corev1.ProtocolTCP,
 					Port:     vaultClusterPort,
 				},
 				{
 					Name:     "prometheus",
-					Protocol: v1.ProtocolTCP,
+					Protocol: corev1.ProtocolTCP,
 					Port:     exporterPromPort,
 				},
 			},
 		},
 	}
 	addOwnerRefToObject(svc, asOwner(v))
-	err = sdk.Create(svc)
+	err = r.client.Create(context.TODO(), svc)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("failed to create vault service: %v", err)
 	}
@@ -141,15 +141,15 @@ func deployVault(v *api.VaultService) error {
 
 // configEtcdBackendTLS configures the volume and mounts in vault pod to
 // set up etcd backend TLS assets
-func configEtcdBackendTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
+func configEtcdBackendTLS(pt *corev1.PodTemplateSpec, v *vaultv1alpha1.VaultService) {
 	sn := EtcdClientTLSSecretName(v.Name)
-	pt.Spec.Volumes = append(pt.Spec.Volumes, v1.Volume{
+	pt.Spec.Volumes = append(pt.Spec.Volumes, corev1.Volume{
 		Name: vaultTLSAssetVolume,
-		VolumeSource: v1.VolumeSource{
-			Projected: &v1.ProjectedVolumeSource{
-				Sources: []v1.VolumeProjection{{
-					Secret: &v1.SecretProjection{
-						LocalObjectReference: v1.LocalObjectReference{
+		VolumeSource: corev1.VolumeSource{
+			Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
 							Name: sn,
 						},
 					},
@@ -157,7 +157,7 @@ func configEtcdBackendTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
 			},
 		},
 	})
-	pt.Spec.Containers[0].VolumeMounts = append(pt.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
+	pt.Spec.Containers[0].VolumeMounts = append(pt.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
 		Name:      vaultTLSAssetVolume,
 		ReadOnly:  true,
 		MountPath: vaultTLSAssetDir,
@@ -165,12 +165,12 @@ func configEtcdBackendTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
 }
 
 // configVaultServerTLS mounts the volume containing the vault server TLS assets for the vault pod
-func configVaultServerTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
+func configVaultServerTLS(pt *corev1.PodTemplateSpec, v *vaultv1alpha1.VaultService) {
 	secretName := v.Spec.TLS.Static.ServerSecret
 
-	serverTLSVolume := v1.VolumeProjection{
-		Secret: &v1.SecretProjection{
-			LocalObjectReference: v1.LocalObjectReference{
+	serverTLSVolume := corev1.VolumeProjection{
+		Secret: &corev1.SecretProjection{
+			LocalObjectReference: corev1.LocalObjectReference{
 				Name: secretName,
 			},
 		},
@@ -178,7 +178,7 @@ func configVaultServerTLS(pt *v1.PodTemplateSpec, v *api.VaultService) {
 	pt.Spec.Volumes[1].VolumeSource.Projected.Sources = append(pt.Spec.Volumes[1].VolumeSource.Projected.Sources, serverTLSVolume)
 }
 
-func applyPodPolicy(s *v1.PodSpec, p *api.PodPolicy) {
+func applyPodPolicy(s *corev1.PodSpec, p *vaultv1alpha1.PodPolicy) {
 	for i := range s.Containers {
 		s.Containers[i].Resources = p.Resources
 	}
@@ -189,17 +189,17 @@ func applyPodPolicy(s *v1.PodSpec, p *api.PodPolicy) {
 }
 
 // IsPodReady checks the status of the pod for the Ready condition
-func IsPodReady(p v1.Pod) bool {
+func IsPodReady(p corev1.Pod) bool {
 	for _, c := range p.Status.Conditions {
-		if c.Type == v1.PodReady {
-			return c.Status == v1.ConditionTrue
+		if c.Type == corev1.PodReady {
+			return c.Status == corev1.ConditionTrue
 		}
 	}
 	return false
 }
 
-func vaultContainer(v *api.VaultService) v1.Container {
-	return v1.Container{
+func vaultContainer(v *vaultv1alpha1.VaultService) corev1.Container {
+	return corev1.Container{
 		Name:  "vault",
 		Image: fmt.Sprintf("%s:%s", v.Spec.BaseImage, v.Spec.Version),
 		Command: []string{
@@ -207,7 +207,7 @@ func vaultContainer(v *api.VaultService) v1.Container {
 			"server",
 			"-config=" + vaultConfigPath,
 		},
-		Env: []v1.EnvVar{
+		Env: []corev1.EnvVar{
 			{
 				Name:  evnVaultRedirectAddr,
 				Value: vaultServiceURL(v.GetName(), v.GetNamespace(), vaultClientPort),
@@ -217,27 +217,27 @@ func vaultContainer(v *api.VaultService) v1.Container {
 				Value: vaultServiceURL(v.GetName(), v.GetNamespace(), vaultClusterPort),
 			},
 		},
-		VolumeMounts: []v1.VolumeMount{{
+		VolumeMounts: []corev1.VolumeMount{{
 			Name:      vaultConfigVolName,
 			MountPath: filepath.Dir(vaultConfigPath),
 		}},
-		SecurityContext: &v1.SecurityContext{
-			Capabilities: &v1.Capabilities{
+		SecurityContext: &corev1.SecurityContext{
+			Capabilities: &corev1.Capabilities{
 				// Vault requires mlock syscall to work.
 				// Without this it would fail "Error initializing core: Failed to lock memory: cannot allocate memory"
-				Add: []v1.Capability{"IPC_LOCK"},
+				Add: []corev1.Capability{"IPC_LOCK"},
 			},
 		},
-		Ports: []v1.ContainerPort{{
+		Ports: []corev1.ContainerPort{{
 			Name:          vaultClientPortName,
 			ContainerPort: int32(vaultClientPort),
 		}, {
 			Name:          vaultClusterPortName,
 			ContainerPort: int32(vaultClusterPort),
 		}},
-		LivenessProbe: &v1.Probe{
-			Handler: v1.Handler{
-				Exec: &v1.ExecAction{
+		LivenessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
 					Command: []string{
 						"curl",
 						"--connect-timeout", "5",
@@ -252,12 +252,12 @@ func vaultContainer(v *api.VaultService) v1.Container {
 			PeriodSeconds:       60,
 			FailureThreshold:    3,
 		},
-		ReadinessProbe: &v1.Probe{
-			Handler: v1.Handler{
-				HTTPGet: &v1.HTTPGetAction{
+		ReadinessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/v1/sys/health",
 					Port:   intstr.FromInt(vaultClientPort),
-					Scheme: v1.URISchemeHTTPS,
+					Scheme: corev1.URISchemeHTTPS,
 				},
 			},
 			InitialDelaySeconds: 10,
@@ -273,18 +273,18 @@ func vaultServiceURL(name, namespace string, port int) string {
 	return fmt.Sprintf("https://%s.%s.svc:%d", name, namespace, port)
 }
 
-func statsdExporterContainer() v1.Container {
-	return v1.Container{
+func statsdExporterContainer() corev1.Container {
+	return corev1.Container{
 		Name:  "statsd-exporter",
 		Image: exporterImage,
-		Ports: []v1.ContainerPort{{
+		Ports: []corev1.ContainerPort{{
 			Name:          "statsd",
 			ContainerPort: exporterStatsdPort,
-			Protocol:      v1.ProtocolUDP,
+			Protocol:      corev1.ProtocolUDP,
 		}, {
 			Name:          "prometheus",
 			ContainerPort: exporterPromPort,
-			Protocol:      v1.ProtocolTCP,
+			Protocol:      corev1.ProtocolTCP,
 		}},
 	}
 }

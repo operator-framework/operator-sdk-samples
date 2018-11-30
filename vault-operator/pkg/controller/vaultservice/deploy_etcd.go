@@ -1,15 +1,16 @@
-package vault
+package vaultservice
 
 import (
+	"context"
 	"fmt"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 // deployEtcdCluster creates an etcd cluster for the given vault's name via etcd operator.
-func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
+func (r *ReconcileVaultService) deployEtcdCluster(v *vaultv1alpha1.VaultService) (*eopapi.EtcdCluster, error) {
 	ec := &eopapi.EtcdCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       eopapi.EtcdClusterResourceKind,
@@ -51,7 +52,7 @@ func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 		ec.Spec.Pod.Resources = v.Spec.Pod.Resources
 	}
 	addOwnerRefToObject(ec, asOwner(v))
-	err := sdk.Create(ec)
+	err := r.client.Create(context.TODO(), ec)
 	if err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			return ec, nil
@@ -71,8 +72,8 @@ func etcdURLForVault(name string) string {
 	return fmt.Sprintf("https://%s-client:2379", EtcdNameForVault(name))
 }
 
-func isEtcdClusterReady(ec *eopapi.EtcdCluster) (bool, error) {
-	err := sdk.Get(ec)
+func (r *ReconcileVaultService) isEtcdClusterReady(ec *eopapi.EtcdCluster, nsName types.NamespacedName) (bool, error) {
+	err := r.client.Get(context.TODO(), nsName, ec)
 	if err != nil {
 		return false, err
 	}

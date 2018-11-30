@@ -1,17 +1,18 @@
-package vault
+package vaultservice
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/tls"
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
 
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -21,7 +22,7 @@ var (
 
 // prepareDefaultVaultTLSSecrets creates the default secrets for the vault server's TLS assets.
 // Currently we self-generate the CA, and use the self generated CA to sign all the TLS certs.
-func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
+func (r *ReconcileVaultService) prepareDefaultVaultTLSSecrets(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("prepare default vault TLS secrets failed: %v", err)
@@ -29,7 +30,7 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 	}()
 
 	// if TLS spec doesn't exist or secrets doesn't exist, then we can go create secrets.
-	if api.IsTLSConfigured(vr.Spec.TLS) {
+	if vaultv1alpha1.IsTLSConfigured(vr.Spec.TLS) {
 		se := &v1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Secret",
@@ -40,7 +41,7 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 				Namespace: vr.Namespace,
 			},
 		}
-		err = sdk.Get(se)
+		err = r.client.Get(context.TODO(), nsName, se)
 		if err == nil {
 			return nil
 		}
@@ -58,14 +59,14 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = sdk.Create(se)
+	err = r.client.Create(context.TODO(), se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 
 	se = newVaultClientTLSSecret(vr, caCrt)
 	addOwnerRefToObject(se, asOwner(vr))
-	err = sdk.Create(se)
+	err = r.client.Create(context.TODO(), se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -73,8 +74,8 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 }
 
 // newVaultServerTLSSecret returns a secret containing vault server TLS assets
-func newVaultServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
-	return newTLSSecret(vr, caKey, caCrt, "vault server", api.DefaultVaultServerTLSSecretName(vr.Name),
+func newVaultServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+	return newTLSSecret(vr, caKey, caCrt, "vault server", vaultv1alpha1.DefaultVaultServerTLSSecretName(vr.Name),
 		[]string{
 			"localhost",
 			fmt.Sprintf("*.%s.pod", vr.Namespace),
@@ -90,26 +91,26 @@ func newVaultServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt 
 
 // newVaultClientTLSSecret returns a secret containing vault client TLS assets.
 // The client key and certificate are not generated since clients are not authenticated at the server
-func newVaultClientTLSSecret(vr *api.VaultService, caCrt *x509.Certificate) *v1.Secret {
+func newVaultClientTLSSecret(vr *vaultv1alpha1.VaultService, caCrt *x509.Certificate) *v1.Secret {
 	return &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      api.DefaultVaultClientTLSSecretName(vr.Name),
+			Name:      vaultv1alpha1.DefaultVaultClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
 			Labels:    LabelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
-			api.CATLSCertName: tls.EncodeCertificatePEM(caCrt),
+			vaultv1alpha1.CATLSCertName: tls.EncodeCertificatePEM(caCrt),
 		},
 	}
 }
 
 // prepareEtcdTLSSecrets creates three etcd TLS secrets (client, server, peer) containing TLS assets.
 // Currently we self-generate the CA, and use the self generated CA to sign all the TLS certs.
-func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
+func (r *ReconcileVaultService) prepareEtcdTLSSecrets(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("prepare TLS secrets failed: %v", err)
@@ -127,7 +128,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		},
 	}
 
-	err = sdk.Get(se)
+	err = r.client.Get(context.TODO(), nsName, se)
 	if err == nil {
 		return nil
 	}
@@ -145,7 +146,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = sdk.Create(se)
+	err = r.client.Create(context.TODO(), se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -155,7 +156,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = sdk.Create(se)
+	err = r.client.Create(context.TODO(), se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -165,7 +166,7 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 		return err
 	}
 	addOwnerRefToObject(se, asOwner(vr))
-	err = sdk.Create(se)
+	err = r.client.Create(context.TODO(), se)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return err
 	}
@@ -192,7 +193,7 @@ func newCACert() (*rsa.PrivateKey, *x509.Certificate, error) {
 }
 
 // newEtcdClientTLSSecret returns a secret containing etcd client TLS assets
-func newEtcdClientTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdClientTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd client", EtcdClientTLSSecretName(vr.Name), nil,
 		map[string]string{
 			"key":  "etcd-client.key",
@@ -202,7 +203,7 @@ func newEtcdClientTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *
 }
 
 // newEtcdPeerTLSSecret returns a secret containing etcd peer TLS assets
-func newEtcdPeerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdPeerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd peer", etcdPeerTLSSecretName(vr.Name),
 		[]string{
 			fmt.Sprintf("*.%s.%s.svc", EtcdNameForVault(vr.Name), vr.Namespace),
@@ -216,7 +217,7 @@ func newEtcdPeerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x5
 }
 
 // newTLSSecret is a common utility for creating a secret containing TLS assets.
-func newTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate, commonName, secretName string,
+func newTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate, commonName, secretName string,
 	addrs []string, fieldMap map[string]string) (*v1.Secret, error) {
 	tc := tls.CertConfig{
 		CommonName:   commonName,
@@ -259,7 +260,7 @@ func newKeyAndCert(caCert *x509.Certificate, caPrivKey *rsa.PrivateKey, config t
 }
 
 // newEtcdServerTLSSecret returns a secret containing etcd server TLS assets
-func newEtcdServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
+func newEtcdServerTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certificate) (*v1.Secret, error) {
 	return newTLSSecret(vr, caKey, caCrt, "etcd server", etcdServerTLSSecretName(vr.Name),
 		[]string{
 			"localhost",

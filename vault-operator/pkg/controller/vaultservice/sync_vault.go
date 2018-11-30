@@ -1,21 +1,22 @@
-package vault
+package vaultservice
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // syncVaultClusterSize ensures that the vault cluster is at the desired size.
-func syncVaultClusterSize(vr *api.VaultService) error {
+func (r *ReconcileVaultService) syncVaultClusterSize(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) error {
 	d := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -26,14 +27,14 @@ func syncVaultClusterSize(vr *api.VaultService) error {
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err := sdk.Get(d)
+	err := r.client.Get(context.TODO(), nsName, d)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment (%s): %v", d.Name, err)
 	}
 
 	if *d.Spec.Replicas != vr.Spec.Nodes {
 		d.Spec.Replicas = &(vr.Spec.Nodes)
-		err = sdk.Update(d)
+		err = r.client.Update(context.TODO(), d)
 		if err != nil {
 			return fmt.Errorf("failed to update size of deployment (%s): %v", d.Name, err)
 		}
@@ -41,7 +42,7 @@ func syncVaultClusterSize(vr *api.VaultService) error {
 	return nil
 }
 
-func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err error) {
+func (r *ReconcileVaultService) syncUpgrade(vr *vaultv1alpha1.VaultService, status *vaultv1alpha1.VaultServiceStatus, nsName types.NamespacedName) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("syncUpgrade failed: %v", err)
@@ -58,7 +59,7 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err = sdk.Get(d)
+	err = r.client.Get(context.TODO(), nsName, d)
 	if err != nil {
 		return fmt.Errorf("failed to get deployment (%s): %v", d.Name, err)
 	}
@@ -66,7 +67,7 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 	// If the deployment version hasn't been updated, roll forward the deployment version
 	// but keep the existing active Vault node alive though.
 	if !isVaultVersionMatch(d.Spec.Template.Spec, vr.Spec) {
-		err = upgradeDeployment(vr, d)
+		err = r.upgradeDeployment(vr, d)
 		if err != nil {
 			return err
 		}
@@ -113,7 +114,7 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 				Namespace: vr.GetNamespace(),
 			},
 		}
-		err = sdk.Delete(p)
+		err = r.client.Delete(context.TODO(), p)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("step down: failed to delete active Vault pod (%s): %v", active, err)
 		}
@@ -124,11 +125,11 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 // upgradeDeployment sets deployment spec to:
 // - roll forward version
 // - keep active Vault node available by setting maxUnavailable=N-1
-func upgradeDeployment(vr *api.VaultService, d *appsv1.Deployment) error {
+func (r *ReconcileVaultService) upgradeDeployment(vr *vaultv1alpha1.VaultService, d *appsv1.Deployment) error {
 	mu := intstr.FromInt(int(vr.Spec.Nodes - 1))
 	d.Spec.Strategy.RollingUpdate.MaxUnavailable = &mu
 	d.Spec.Template.Spec.Containers[0].Image = vaultImage(vr.Spec)
-	err := sdk.Update(d)
+	err := r.client.Update(context.TODO(), d)
 	if err != nil {
 		return fmt.Errorf("failed to upgrade deployment to (%s): %v", vaultImage(vr.Spec), err)
 	}

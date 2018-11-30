@@ -1,7 +1,7 @@
-package vault
+package vaultservice
 
 import (
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,11 +18,11 @@ func LabelsForVault(name string) map[string]string {
 }
 
 // asOwner returns an owner reference set as the vault cluster CR
-func asOwner(v *api.VaultService) metav1.OwnerReference {
+func asOwner(v *vaultv1alpha1.VaultService) metav1.OwnerReference {
 	trueVar := true
 	return metav1.OwnerReference{
-		APIVersion: api.SchemeGroupVersion.String(),
-		Kind:       api.VaultServiceKind,
+		APIVersion: vaultv1alpha1.SchemeGroupVersion.String(),
+		Kind:       "VaultService",
 		Name:       v.Name,
 		UID:        v.UID,
 		Controller: &trueVar,

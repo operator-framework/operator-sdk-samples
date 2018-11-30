@@ -2,16 +2,17 @@ package vaultservice
 
 import (
 	"context"
+	"fmt"
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/sirupsen/logrus"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -86,8 +87,8 @@ func (r *ReconcileVaultService) Reconcile(request reconcile.Request) (reconcile.
 	reqLogger.Info("Reconciling VaultService")
 
 	// Fetch the VaultService instance
-	instance := &vaultv1alpha1.VaultService{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	vr := &vaultv1alpha1.VaultService{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, vr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -99,32 +100,70 @@ func (r *ReconcileVaultService) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
-
-	// Set VaultService instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
+	// Simulate initializer.
+	changed := vr.SetDefaults()
+	if changed {
+		return reconcile.Result{}, r.client.Update(context.TODO(), vr)
 	}
-
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
+	// After first time reconcile, phase will switch to "Running".
+	if vr.Status.Phase == vaultv1alpha1.ClusterPhaseInitial {
+		err = r.prepareEtcdTLSSecrets(vr, request.NamespacedName)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
+		// etcd cluster should only be created in first time reconcile.
+		ec, err := r.deployEtcdCluster(vr)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		// Check if etcd cluster is up and running.
+		// If not, we need to wait until etcd cluster is up before proceeding to the next state;
+		// Hence, we return from here and let the Watch triggers the handler again.
+		ready, err := r.isEtcdClusterReady(ec, request.NamespacedName)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed to check if etcd cluster is ready: %v", err)
+		}
+		if !ready {
+			logrus.Infof("Waiting for EtcdCluster (%v) to become ready", ec.Name)
+			return reconcile.Result{}, nil
+		}
+	}
 
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
+	err = r.prepareDefaultVaultTLSSecrets(vr, request.NamespacedName)
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
+	err = r.prepareVaultConfig(vr, request.NamespacedName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = r.deployVault(vr)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = r.syncVaultClusterSize(vr, request.NamespacedName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	vcs, err := r.getVaultStatus(vr, request.NamespacedName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = r.syncUpgrade(vr, vcs, request.NamespacedName)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = r.updateVaultStatus(vr, vcs)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
 

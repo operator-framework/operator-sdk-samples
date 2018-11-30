@@ -1,33 +1,35 @@
-package vault
+package vaultservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"reflect"
 	"strings"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	vaultapi "github.com/hashicorp/vault/api"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 )
 
-func updateVaultStatus(vr *api.VaultService, status *api.VaultServiceStatus) error {
+func (r *ReconcileVaultService) updateVaultStatus(vr *vaultv1alpha1.VaultService, status *vaultv1alpha1.VaultServiceStatus) error {
 	// don't update the status if there aren't any changes.
 	if reflect.DeepEqual(vr.Status, *status) {
 		return nil
 	}
 	vr.Status = *status
-	return sdk.Update(vr)
+	return r.client.Update(context.TODO(), vr)
 }
 
 // getVaultStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
 // and it only succeeds if all of the nodes from vault cluster are reachable.
-func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
+func (r *ReconcileVaultService) getVaultStatus(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (*vaultv1alpha1.VaultServiceStatus, error) {
 	pods := &v1.PodList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
@@ -35,13 +37,16 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 		},
 	}
 	sel := LabelsForVault(vr.Name)
-	opt := &metav1.ListOptions{LabelSelector: labels.SelectorFromSet(sel).String()}
-	err := sdk.List(vr.GetNamespace(), pods, sdk.WithListOptions(opt))
+	opt := &client.ListOptions{
+		Namespace:     vr.GetNamespace(),
+		LabelSelector: labels.SelectorFromSet(sel),
+	}
+	err := r.client.List(context.TODO(), opt, pods)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vault's pods: %v", err)
 	}
 
-	tc, err := vaultTLSFromSecret(vr)
+	tc, err := r.vaultTLSFromSecret(vr, nsName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read TLS config for vault client: %v", err)
 	}
@@ -88,12 +93,12 @@ func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
 		}
 	}
 
-	return &api.VaultServiceStatus{
-		Phase:       api.ClusterPhaseRunning,
+	return &vaultv1alpha1.VaultServiceStatus{
+		Phase:       vaultv1alpha1.ClusterPhaseRunning,
 		Initialized: initialized,
 		ServiceName: vr.GetName(),
 		ClientPort:  vaultClientPort,
-		VaultStatus: api.VaultStatus{
+		VaultStatus: vaultv1alpha1.VaultStatus{
 			Active:  active,
 			Standby: standby,
 			Sealed:  sealed,
@@ -111,7 +116,7 @@ func NewVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig)
 }
 
 // VaultTLSFromSecret reads Vault CR's TLS secret and converts it into a vault client's TLS config struct.
-func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
+func (r *ReconcileVaultService) vaultTLSFromSecret(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) (*vaultapi.TLSConfig, error) {
 	cs := vr.Spec.TLS.Static.ClientSecret
 	se := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -123,14 +128,14 @@ func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 			Namespace: vr.GetNamespace(),
 		},
 	}
-	err := sdk.Get(se)
+	err := r.client.Get(context.TODO(), nsName, se)
 	if err != nil {
 		return nil, fmt.Errorf("read client tls failed: failed to get secret (%s): %v", cs, err)
 	}
 
 	// Read the secret and write ca.crt to a temporary file
-	caCertData := se.Data[api.CATLSCertName]
-	f, err := ioutil.TempFile("", api.CATLSCertName)
+	caCertData := se.Data[vaultv1alpha1.CATLSCertName]
+	f, err := ioutil.TempFile("", vaultv1alpha1.CATLSCertName)
 	if err != nil {
 		return nil, fmt.Errorf("read client tls failed: create temp file failed: %v", err)
 	}

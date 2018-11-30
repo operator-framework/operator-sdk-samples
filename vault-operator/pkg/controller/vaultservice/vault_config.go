@@ -1,15 +1,17 @@
-package vault
+package vaultservice
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	"github.com/operator-framework/operator-sdk/pkg/sdk"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+
 	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -27,7 +29,7 @@ const (
 // - If given user configmap, appends into user provided vault config
 //   and creates another configmap "${configMapName}-copy" for it.
 // - Otherwise, creates a new configmap "${vaultName}-copy" with our section.
-func prepareVaultConfig(vr *api.VaultService) error {
+func (r *ReconcileVaultService) prepareVaultConfig(vr *vaultv1alpha1.VaultService, nsName types.NamespacedName) error {
 	var cfgData string
 	cm := &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -40,7 +42,7 @@ func prepareVaultConfig(vr *api.VaultService) error {
 	}
 	if len(vr.Spec.ConfigMapName) != 0 {
 		cm.Name = vr.Spec.ConfigMapName
-		err := sdk.Get(cm)
+		err := r.client.Get(context.TODO(), nsName, cm)
 		if err != nil {
 			return fmt.Errorf("prepare vault config error: get configmap (%s) failed: %v", vr.Spec.ConfigMapName, err)
 		}
@@ -53,7 +55,7 @@ func prepareVaultConfig(vr *api.VaultService) error {
 	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
 	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}
 	addOwnerRefToObject(cm, asOwner(vr))
-	err := sdk.Create(cm)
+	err := r.client.Create(context.TODO(), cm)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return fmt.Errorf("prepare vault config error: create new configmap (%s) failed: %v", cm.Name, err)
 	}
@@ -111,7 +113,7 @@ telemetry {
 // configMapNameForVault is the configmap name for the given vault.
 // If ConfigMapName is given is spec, it will make a new name based on that.
 // Otherwise, we will create a default configmap using the Vault's name.
-func configMapNameForVault(v *api.VaultService) string {
+func configMapNameForVault(v *vaultv1alpha1.VaultService) string {
 	n := v.Spec.ConfigMapName
 	if len(n) == 0 {
 		n = v.Name
