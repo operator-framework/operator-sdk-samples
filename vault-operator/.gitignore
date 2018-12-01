@@ -1,4 +1,5 @@
-# Folders
-tmp/_output/
-tmp/_test/
+# Code editor configs
 .vscode/
+
+# Build artifacts
+build/_output/
