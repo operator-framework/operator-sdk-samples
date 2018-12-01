@@ -5,34 +5,37 @@ import (
 	"fmt"
 	"testing"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"k8s.io/apimachinery/pkg/types"
-	runtime "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // CreateCluster creates a vault CR with the desired spec
-func CreateCluster(t *testing.T, crClient runtime.Client, vs *api.VaultService) (*api.VaultService, error) {
-	err := crClient.Create(goctx.TODO(), vs)
+func CreateCluster(t *testing.T, f *framework.Framework, vs *vaultv1alpha1.VaultService) (*vaultv1alpha1.VaultService, error) {
+	err := f.Client.Create(goctx.TODO(), vs, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CR: %v", err)
 	}
-	vault := &api.VaultService{}
-	err = crClient.Get(goctx.TODO(), types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}, vault)
+	vault := &vaultv1alpha1.VaultService{}
+	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}, vault)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get CR: %v", err)
+	}
 	LogfWithTimestamp(t, "created vault cluster: %s", vault.Name)
 	return vault, nil
 }
 
 // ResizeCluster updates the Nodes field of the vault CR
-func ResizeCluster(t *testing.T, crClient runtime.Client, vs *api.VaultService, size int) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func ResizeCluster(t *testing.T, f *framework.Framework, vs *vaultv1alpha1.VaultService, size int) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	namespacedName := types.NamespacedName{Namespace: vs.GetNamespace(), Name: vs.GetName()}
-	err := crClient.Get(goctx.TODO(), namespacedName, vault)
+	err := f.Client.Get(goctx.TODO(), namespacedName, vault)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CR: %v", err)
 	}
 	vault.Spec.Nodes = int32(size)
-	err = crClient.Update(goctx.TODO(), vault)
+	err = f.Client.Update(goctx.TODO(), vault)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update CR: %v", err)
 	}
@@ -41,15 +44,15 @@ func ResizeCluster(t *testing.T, crClient runtime.Client, vs *api.VaultService, 
 }
 
 // UpdateVersion updates the Version field of the vault CR
-func UpdateVersion(t *testing.T, crClient runtime.Client, vs *api.VaultService, version string) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func UpdateVersion(t *testing.T, f *framework.Framework, vs *vaultv1alpha1.VaultService, version string) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	namespacedName := types.NamespacedName{Namespace: vs.GetNamespace(), Name: vs.GetName()}
-	err := crClient.Get(goctx.TODO(), namespacedName, vault)
+	err := f.Client.Get(goctx.TODO(), namespacedName, vault)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CR: %v", err)
 	}
 	vault.Spec.Version = version
-	err = crClient.Update(goctx.TODO(), vault)
+	err = f.Client.Update(goctx.TODO(), vault)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update CR: %v", err)
 	}
@@ -58,9 +61,9 @@ func UpdateVersion(t *testing.T, crClient runtime.Client, vs *api.VaultService, 
 }
 
 // DeleteCluster deletes the vault CR specified by cluster spec
-func DeleteCluster(t *testing.T, crClient runtime.Client, vs *api.VaultService) error {
+func DeleteCluster(t *testing.T, f *framework.Framework, vs *vaultv1alpha1.VaultService) error {
 	t.Logf("deleting vault cluster: %v", vs.Name)
-	err := crClient.Delete(goctx.TODO(), vs)
+	err := f.Client.Delete(goctx.TODO(), vs)
 	if err != nil {
 		return fmt.Errorf("failed to delete CR: %v", err)
 	}

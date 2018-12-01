@@ -7,41 +7,40 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
-	oputil "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vault"
-	runtime "sigs.k8s.io/controller-runtime/pkg/client"
+	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vaultutil"
 
-	"k8s.io/api/core/v1"
+	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 )
 
 // Retry interval used for all retries in wait related functions
 var retryInterval = 10 * time.Second
 
 // checkConditionFunc is used to check if a condition for the vault CR is true
-type checkConditionFunc func(*api.VaultService) bool
+type checkConditionFunc func(*vaultv1alpha1.VaultService) bool
 
 // filterFunc returns true if the pod matches some condition defined by filterFunc
-type filterFunc func(*v1.Pod) bool
+type filterFunc func(*corev1.Pod) bool
 
 // WaitUntilOperatorReady will wait until the first pod with the label name=<name> is ready.
-func WaitUntilOperatorReady(kubecli kubernetes.Interface, namespace, name string) error {
+func WaitUntilOperatorReady(f *framework.Framework, name, namespace string) error {
 	var podName string
 	lo := metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(PodLabelForOperator(name)).String(),
 	}
 	err := wait.PollImmediate(retryInterval, 6*retryInterval, func() (bool, error) {
-		podList, err := kubecli.CoreV1().Pods(namespace).List(lo)
+		podList, err := f.KubeClient.CoreV1().Pods(namespace).List(lo)
 		if err != nil {
 			return false, err
 		}
 		if len(podList.Items) > 0 {
 			podName = podList.Items[0].Name
-			if oputil.IsPodReady(podList.Items[0]) {
+			if vaultutil.IsPodReady(podList.Items[0]) {
 				return true, nil
 			}
 		}
@@ -54,12 +53,12 @@ func WaitUntilOperatorReady(kubecli kubernetes.Interface, namespace, name string
 }
 
 // WaitUntilVaultConditionTrue retries until the specified condition check becomes true for the vault CR
-func WaitUntilVaultConditionTrue(t *testing.T, vaultsCRClient runtime.Client, retries int, vs *api.VaultService, checkCondition checkConditionFunc) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func WaitUntilVaultConditionTrue(t *testing.T, f *framework.Framework, retries int, vs *vaultv1alpha1.VaultService, checkCondition checkConditionFunc) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	var err error
 	err = wait.Poll(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}
-		err = vaultsCRClient.Get(goctx.TODO(), namespacedName, vault)
+		err = f.Client.Get(goctx.TODO(), namespacedName, vault)
 		if err != nil {
 			return false, fmt.Errorf("failed to get CR: %v", err)
 		}
@@ -72,8 +71,8 @@ func WaitUntilVaultConditionTrue(t *testing.T, vaultsCRClient runtime.Client, re
 }
 
 // WaitAvailableVaultsUp retries until the desired number of vault nodes are shown as available in the CR status
-func WaitAvailableVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, retries int, vs *api.VaultService) (*api.VaultService, error) {
-	vault, err := WaitUntilVaultConditionTrue(t, vaultsCRClient, retries, vs, func(v *api.VaultService) bool {
+func WaitAvailableVaultsUp(t *testing.T, f *framework.Framework, size, retries int, vs *vaultv1alpha1.VaultService) (*vaultv1alpha1.VaultService, error) {
+	vault, err := WaitUntilVaultConditionTrue(t, f, retries, vs, func(v *vaultv1alpha1.VaultService) bool {
 		available := getAvailableNodes(v.Status.VaultStatus)
 		LogfWithTimestamp(t, "available nodes: (%v)", available)
 		return len(available) == size
@@ -85,8 +84,8 @@ func WaitAvailableVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, re
 }
 
 // WaitSealedVaultsUp retries until the desired number of vault nodes are shown as sealed in the CR status
-func WaitSealedVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, retries int, vs *api.VaultService) (*api.VaultService, error) {
-	vault, err := WaitUntilVaultConditionTrue(t, vaultsCRClient, retries, vs, func(v *api.VaultService) bool {
+func WaitSealedVaultsUp(t *testing.T, f *framework.Framework, size, retries int, vs *vaultv1alpha1.VaultService) (*vaultv1alpha1.VaultService, error) {
+	vault, err := WaitUntilVaultConditionTrue(t, f, retries, vs, func(v *vaultv1alpha1.VaultService) bool {
 		LogfWithTimestamp(t, "sealed nodes: (%v)", v.Status.VaultStatus.Sealed)
 		return len(v.Status.VaultStatus.Sealed) == size
 	})
@@ -97,8 +96,8 @@ func WaitSealedVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, retri
 }
 
 // WaitStandbyVaultsUp retries until the desired number of vault nodes are shown as standby in the CR status
-func WaitStandbyVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, retries int, vs *api.VaultService) (*api.VaultService, error) {
-	vault, err := WaitUntilVaultConditionTrue(t, vaultsCRClient, retries, vs, func(v *api.VaultService) bool {
+func WaitStandbyVaultsUp(t *testing.T, f *framework.Framework, size, retries int, vs *vaultv1alpha1.VaultService) (*vaultv1alpha1.VaultService, error) {
+	vault, err := WaitUntilVaultConditionTrue(t, f, retries, vs, func(v *vaultv1alpha1.VaultService) bool {
 		LogfWithTimestamp(t, "standby nodes: (%v)", v.Status.VaultStatus.Standby)
 		return len(v.Status.VaultStatus.Standby) == size
 	})
@@ -109,8 +108,8 @@ func WaitStandbyVaultsUp(t *testing.T, vaultsCRClient runtime.Client, size, retr
 }
 
 // WaitActiveVaultsUp retries until there is 1 active node in the CR status
-func WaitActiveVaultsUp(t *testing.T, vaultsCRClient runtime.Client, retries int, vs *api.VaultService) (*api.VaultService, error) {
-	vault, err := WaitUntilVaultConditionTrue(t, vaultsCRClient, retries, vs, func(v *api.VaultService) bool {
+func WaitActiveVaultsUp(t *testing.T, f *framework.Framework, retries int, vs *vaultv1alpha1.VaultService) (*vaultv1alpha1.VaultService, error) {
+	vault, err := WaitUntilVaultConditionTrue(t, f, retries, vs, func(v *vaultv1alpha1.VaultService) bool {
 		LogfWithTimestamp(t, "active node: (%v)", v.Status.VaultStatus.Active)
 		return len(v.Status.VaultStatus.Active) != 0
 	})
@@ -121,13 +120,13 @@ func WaitActiveVaultsUp(t *testing.T, vaultsCRClient runtime.Client, retries int
 }
 
 // WaitPodsDeletedCompletely waits until the pods are completely removed(not just terminating) for the given label selector
-func WaitPodsDeletedCompletely(kubecli kubernetes.Interface, namespace string, retries int, lo metav1.ListOptions) ([]*v1.Pod, error) {
-	return waitPodsDeleted(kubecli, namespace, retries, lo)
+func WaitPodsDeletedCompletely(f *framework.Framework, namespace string, retries int, lo metav1.ListOptions) ([]*corev1.Pod, error) {
+	return waitPodsDeleted(f, namespace, retries, lo)
 }
 
 // WaitPodsWithImageDeleted waits until the pods with the specified image and labels are removed
-func WaitPodsWithImageDeleted(kubecli kubernetes.Interface, namespace, image string, retries int, lo metav1.ListOptions) ([]*v1.Pod, error) {
-	return waitPodsDeleted(kubecli, namespace, retries, lo, func(p *v1.Pod) bool {
+func WaitPodsWithImageDeleted(f *framework.Framework, namespace, image string, retries int, lo metav1.ListOptions) ([]*corev1.Pod, error) {
+	return waitPodsDeleted(f, namespace, retries, lo, func(p *corev1.Pod) bool {
 		for _, c := range p.Spec.Containers {
 			if c.Image == image {
 				return false
@@ -138,10 +137,10 @@ func WaitPodsWithImageDeleted(kubecli kubernetes.Interface, namespace, image str
 }
 
 // waitPodsDeleted waits until the pods selected by the desired label selector and passing the filter conditions are completely removed
-func waitPodsDeleted(kubecli kubernetes.Interface, namespace string, retries int, lo metav1.ListOptions, filters ...filterFunc) ([]*v1.Pod, error) {
-	var pods []*v1.Pod
+func waitPodsDeleted(f *framework.Framework, namespace string, retries int, lo metav1.ListOptions, filters ...filterFunc) ([]*corev1.Pod, error) {
+	var pods []*corev1.Pod
 	err := wait.PollImmediate(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
-		podList, err := kubecli.CoreV1().Pods(namespace).List(lo)
+		podList, err := f.KubeClient.CoreV1().Pods(namespace).List(lo)
 		if err != nil {
 			return false, fmt.Errorf("failed to list pods: %v", err)
 		}
@@ -164,12 +163,12 @@ func waitPodsDeleted(kubecli kubernetes.Interface, namespace string, retries int
 }
 
 // CheckVersionReached checks if all the targetVaultPods are of the specified version
-func CheckVersionReached(t *testing.T, kubeClient kubernetes.Interface, version string, retries int, vs *api.VaultService, targetVaultPods ...string) error {
+func CheckVersionReached(t *testing.T, f *framework.Framework, version string, retries int, vs *vaultv1alpha1.VaultService, targetVaultPods ...string) error {
 	size := len(targetVaultPods)
 	var names []string
-	sel := oputil.LabelsForVault(vs.Name)
+	sel := vaultutil.LabelsForVault(vs.Name)
 	opt := metav1.ListOptions{LabelSelector: labels.SelectorFromSet(sel).String()}
-	podList, err := kubeClient.Core().Pods(vs.Namespace).List(opt)
+	podList, err := f.KubeClient.Core().Pods(vs.Namespace).List(opt)
 	if err != nil {
 		return err
 	}
@@ -209,13 +208,13 @@ func getVersionFromImage(image string) string {
 }
 
 // WaitUntilActiveIsFrom waits until the active node is from one of the target pods
-func WaitUntilActiveIsFrom(t *testing.T, vaultsCRClient runtime.Client, retries int, vs *api.VaultService, targetVaultPods ...string) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func WaitUntilActiveIsFrom(t *testing.T, f *framework.Framework, retries int, vs *vaultv1alpha1.VaultService, targetVaultPods ...string) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	var err error
 	// TODO: refactor WaitXXX func on VaultService to apply generic condition
 	err = wait.PollImmediate(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}
-		err = vaultsCRClient.Get(goctx.TODO(), namespacedName, vault)
+		err = f.Client.Get(goctx.TODO(), namespacedName, vault)
 		if err != nil {
 			return false, fmt.Errorf("failed to get CR: %v", err)
 		}
@@ -232,12 +231,12 @@ func WaitUntilActiveIsFrom(t *testing.T, vaultsCRClient runtime.Client, retries 
 }
 
 // WaitUntilStandbyAreFrom waits until all the standby nodes are from the target pods
-func WaitUntilStandbyAreFrom(t *testing.T, vaultsCRClient runtime.Client, retries int, vs *api.VaultService, targetVaultPods ...string) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func WaitUntilStandbyAreFrom(t *testing.T, f *framework.Framework, retries int, vs *vaultv1alpha1.VaultService, targetVaultPods ...string) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	var err error
 	err = wait.PollImmediate(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}
-		err = vaultsCRClient.Get(goctx.TODO(), namespacedName, vault)
+		err = f.Client.Get(goctx.TODO(), namespacedName, vault)
 		if err != nil {
 			return false, fmt.Errorf("failed to get CR: %v", err)
 		}
@@ -256,12 +255,12 @@ func WaitUntilStandbyAreFrom(t *testing.T, vaultsCRClient runtime.Client, retrie
 }
 
 // WaitUntilAvailableAreFrom waits until all the available nodes are from the target pods
-func WaitUntilAvailableAreFrom(t *testing.T, vaultsCRClient runtime.Client, retries int, vs *api.VaultService, targetVaultPods ...string) (*api.VaultService, error) {
-	vault := &api.VaultService{}
+func WaitUntilAvailableAreFrom(t *testing.T, f *framework.Framework, retries int, vs *vaultv1alpha1.VaultService, targetVaultPods ...string) (*vaultv1alpha1.VaultService, error) {
+	vault := &vaultv1alpha1.VaultService{}
 	var err error
 	err = wait.PollImmediate(retryInterval, time.Duration(retries)*retryInterval, func() (bool, error) {
 		namespacedName := types.NamespacedName{Namespace: vs.Namespace, Name: vs.Name}
-		err = vaultsCRClient.Get(goctx.TODO(), namespacedName, vault)
+		err = f.Client.Get(goctx.TODO(), namespacedName, vault)
 		if err != nil {
 			return false, fmt.Errorf("failed to get CR: %v", err)
 		}
@@ -280,7 +279,7 @@ func WaitUntilAvailableAreFrom(t *testing.T, vaultsCRClient runtime.Client, retr
 	return vault, nil
 }
 
-func getAvailableNodes(vs api.VaultStatus) []string {
+func getAvailableNodes(vs vaultv1alpha1.VaultStatus) []string {
 	var available []string
 	if len(vs.Active) != 0 {
 		available = append(available, vs.Active)
