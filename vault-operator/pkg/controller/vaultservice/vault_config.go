@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vaultutil"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,7 +51,7 @@ func (r *ReconcileVaultService) prepareVaultConfig(vr *vaultv1alpha1.VaultServic
 	}
 
 	cm.Name = configMapNameForVault(vr)
-	cm.Labels = LabelsForVault(vr.Name)
+	cm.Labels = vaultutil.LabelsForVault(vr.Name)
 	cfgData = newConfigWithDefaultParams(cfgData)
 	cfgData = newConfigWithEtcd(cfgData, etcdURLForVault(vr.Name))
 	cm.Data = map[string]string{filepath.Base(vaultConfigPath): cfgData}

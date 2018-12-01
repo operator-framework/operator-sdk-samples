@@ -8,6 +8,7 @@ import (
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/tls"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vaultutil"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -100,7 +101,7 @@ func newVaultClientTLSSecret(vr *vaultv1alpha1.VaultService, caCrt *x509.Certifi
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      vaultv1alpha1.DefaultVaultClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
-			Labels:    LabelsForVault(vr.Name),
+			Labels:    vaultutil.LabelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
 			vaultv1alpha1.CATLSCertName: tls.EncodeCertificatePEM(caCrt),
@@ -236,7 +237,7 @@ func newTLSSecret(vr *vaultv1alpha1.VaultService, caKey *rsa.PrivateKey, caCrt *
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: vr.Namespace,
-			Labels:    LabelsForVault(vr.Name),
+			Labels:    vaultutil.LabelsForVault(vr.Name),
 		},
 		Data: map[string][]byte{
 			fieldMap["key"]:  tls.EncodePrivateKeyPEM(key),

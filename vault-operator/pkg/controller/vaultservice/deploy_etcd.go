@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vaultutil"
 
 	eopapi "github.com/coreos/etcd-operator/pkg/apis/etcd/v1beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -27,7 +28,7 @@ func (r *ReconcileVaultService) deployEtcdCluster(v *vaultv1alpha1.VaultService)
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EtcdNameForVault(v.Name),
 			Namespace: v.Namespace,
-			Labels:    LabelsForVault(v.Name),
+			Labels:    vaultutil.LabelsForVault(v.Name),
 		},
 		Spec: eopapi.ClusterSpec{
 			Size: size,

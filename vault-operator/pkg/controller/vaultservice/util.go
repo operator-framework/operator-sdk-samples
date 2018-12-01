@@ -11,12 +11,6 @@ func addOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 	o.SetOwnerReferences(append(o.GetOwnerReferences(), r))
 }
 
-// LabelsForVault returns the labels for selecting the resources
-// belonging to the given vault name.
-func LabelsForVault(name string) map[string]string {
-	return map[string]string{"app": "vault", "vault_cluster": name}
-}
-
 // asOwner returns an owner reference set as the vault cluster CR
 func asOwner(v *vaultv1alpha1.VaultService) metav1.OwnerReference {
 	trueVar := true

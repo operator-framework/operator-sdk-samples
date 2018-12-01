@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	vaultv1alpha1 "github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/apis/vault/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/vault-operator/pkg/vaultutil"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +38,7 @@ const (
 // deployVault is idempotent. If an object already exists, this function will ignore creating
 // it and return no error. It is safe to retry on this function.
 func (r *ReconcileVaultService) deployVault(v *vaultv1alpha1.VaultService) error {
-	selector := LabelsForVault(v.GetName())
+	selector := vaultutil.LabelsForVault(v.GetName())
 
 	podTempl := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -186,16 +187,6 @@ func applyPodPolicy(s *corev1.PodSpec, p *vaultv1alpha1.PodPolicy) {
 	for i := range s.InitContainers {
 		s.InitContainers[i].Resources = p.Resources
 	}
-}
-
-// IsPodReady checks the status of the pod for the Ready condition
-func IsPodReady(p corev1.Pod) bool {
-	for _, c := range p.Status.Conditions {
-		if c.Type == corev1.PodReady {
-			return c.Status == corev1.ConditionTrue
-		}
-	}
-	return false
 }
 
 func vaultContainer(v *vaultv1alpha1.VaultService) corev1.Container {
