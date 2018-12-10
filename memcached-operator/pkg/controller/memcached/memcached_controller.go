@@ -140,16 +140,6 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	listOps := &client.ListOptions{
 		Namespace:     memcached.Namespace,
 		LabelSelector: labelSelector,
-		// HACK: due to a fake client bug, ListOptions.Raw.TypeMeta must be
-		// explicitly populated for testing.
-		//
-		// See https://github.com/kubernetes-sigs/controller-runtime/issues/168
-		Raw: &metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Memcached",
-				APIVersion: cachev1alpha1.SchemeGroupVersion.Version,
-			},
-		},
 	}
 	err = r.client.List(context.TODO(), listOps, podList)
 	if err != nil {
