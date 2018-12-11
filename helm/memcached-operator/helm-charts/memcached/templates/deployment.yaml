@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "memcached.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "memcached.name" . }}
+    helm.sh/chart: {{ include "memcached.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.size }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "memcached.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "memcached.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+            - memcached
+            - -m=64
+            - -o
+            - modern
+            - -v
+          image: "memcached:1.4.36-alpine"
+          ports:
+            - containerPort: 11211

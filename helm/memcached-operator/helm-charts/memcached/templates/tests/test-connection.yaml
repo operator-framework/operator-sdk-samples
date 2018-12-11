@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "memcached.fullname" . }}-test-connection"
+  labels:
+    app.kubernetes.io/name: {{ include "memcached.name" . }}
+    helm.sh/chart: {{ include "memcached.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: nc
+      image: busybox
+      command:
+        - sh
+      args:
+        - -c
+        - echo stats | nc {{ include "memcached.fullname" . }} 11211
+  restartPolicy: Never

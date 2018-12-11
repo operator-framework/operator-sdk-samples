@@ -1,0 +1,4 @@
+1. Connect to memcached by running these commands:
+export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "memcached.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+echo "Run 'telnet 127.0.0.1 11211' to use your application"
+kubectl port-forward $POD_NAME 11211:11211

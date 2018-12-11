@@ -1,0 +1,5 @@
+---
+- version: v1alpha1
+  group: cache.example.com
+  kind: Memcached
+  chart: /opt/helm/helm-charts/memcached
