@@ -3,7 +3,8 @@ This project is a component of the [Operator Framework](https://github.com/opera
 # Operator SDK Samples
 This repo contains samples of operators built using the [operator-sdk][operator_sdk].
 
-To view operators which leverage Ansible for deployment, see the [Ansible][ansible_examples] samples section.
+To view operators which leverage Ansible or Helm for deployment, see the [Ansible][ansible_examples] or [Helm][helm_examples] samples sections.
 
 [operator_sdk]:https://github.com/coreos/operator-sdk
 [ansible_examples]:./ansible/
+[helm_examples]:./helm/
