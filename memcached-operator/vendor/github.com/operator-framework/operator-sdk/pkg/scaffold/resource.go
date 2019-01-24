@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/markbates/inflect"
+
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 var (
@@ -31,8 +33,6 @@ var (
 	ResourceVersionRegexp = regexp.MustCompile("^v[1-9][0-9]*((alpha|beta)[1-9][0-9]*)?$")
 	// ResourceKindRegexp matches Kubernetes API Kind's.
 	ResourceKindRegexp = regexp.MustCompile("^[A-Z]{1}[a-zA-Z0-9]+$")
-	// ResourceGroupRegexp matches Kubernetes API Group's.
-	ResourceGroupRegexp = regexp.MustCompile("^[a-z0-9]+$")
 )
 
 // Resource contains the information required to scaffold files for a resource.
@@ -116,24 +116,30 @@ func (r *Resource) checkAndSetKinds() error {
 }
 
 func (r *Resource) checkAndSetGroups() error {
-	r.FullGroup = strings.Split(r.APIVersion, "/")[0]
-	r.Group = strings.Split(r.FullGroup, ".")[0]
-
-	if len(r.Group) == 0 {
+	fg := strings.Split(r.APIVersion, "/")
+	if len(fg) < 2 || len(fg[0]) == 0 {
+		return errors.New("full group cannot be empty")
+	}
+	g := strings.Split(fg[0], ".")
+	if len(g) < 2 || len(g[0]) == 0 {
 		return errors.New("group cannot be empty")
 	}
-	if !ResourceGroupRegexp.MatchString(r.Group) {
-		return errors.New("group should consist of lowercase alphabetical characters")
+	r.FullGroup = fg[0]
+	r.Group = g[0]
+
+	if err := validation.IsDNS1123Subdomain(r.Group); err != nil {
+		return fmt.Errorf("group name is invalid: %v", err)
 	}
 	return nil
 }
 
 func (r *Resource) checkAndSetVersion() error {
-	r.Version = strings.Split(r.APIVersion, "/")[1]
-
-	if len(r.Version) == 0 {
+	api := strings.Split(r.APIVersion, "/")
+	if len(api) < 2 || len(api[1]) == 0 {
 		return errors.New("version cannot be empty")
 	}
+	r.Version = api[1]
+
 	if !ResourceVersionRegexp.MatchString(r.Version) {
 		return errors.New("version is not in the correct Kubernetes version format, ex. v1alpha1")
 	}

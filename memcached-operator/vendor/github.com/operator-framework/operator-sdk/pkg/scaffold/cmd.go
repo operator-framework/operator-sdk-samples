@@ -37,6 +37,7 @@ func (s *Cmd) GetInput() (input.Input, error) {
 const cmdTmpl = `package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -46,6 +47,7 @@ import (
 	"{{ .Repo }}/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -54,14 +56,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
+var log = logf.Log.WithName("cmd")
+
 func printVersion() {
-	logf.Log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
-	logf.Log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
-	logf.Log.Info(fmt.Sprintf("operator-sdk Version: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
+	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
+	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 func main() {
-	printVersion()
 	flag.Parse()
 
 	// The logger instantiated here can be changed to any logger
@@ -69,16 +72,24 @@ func main() {
 	// be propagated through the whole operator, generating
 	// uniform and structured logs.
 	logf.SetLogger(logf.ZapLogger(false))
-	log := logf.Log.WithName("cmd")
+
+	printVersion()
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Error(err, "failed to get watch namespace")
+		log.Error(err, "Failed to get watch namespace")
 		os.Exit(1)
 	}
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	// Become the leader before proceeding
+	err = leader.Become(context.TODO(), "{{ .ProjectName }}-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -109,7 +120,7 @@ func main() {
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
-		log.Error(err, "manager exited non-zero")
+		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
 }

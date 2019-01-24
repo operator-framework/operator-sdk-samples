@@ -20,12 +20,11 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
+	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/golang/protobuf/ptypes"
-	tspb "github.com/golang/protobuf/ptypes/timestamp"
 )
 
 // A DocumentSnapshot contains document data and metadata.
@@ -84,8 +83,8 @@ func (d *DocumentSnapshot) Data() map[string]interface{} {
 //   - Bool converts to bool.
 //   - String converts to string.
 //   - Integer converts int64. When setting a struct field, any signed or unsigned
-//     integer type is permitted except uint64. Overflow is detected and results in
-//     an error.
+//     integer type is permitted except uint, uint64 or uintptr. Overflow is detected
+//     and results in an error.
 //   - Double converts to float64. When setting a struct field, float32 is permitted.
 //     Overflow is detected and results in an error.
 //   - Bytes is converted to []byte.
@@ -104,6 +103,9 @@ func (d *DocumentSnapshot) Data() map[string]interface{} {
 //
 // Field names given by struct field tags are observed, as described in
 // DocumentRef.Create.
+//
+// Only the fields actually present in the document are used to populate p. Other fields
+// of p are left unchanged.
 //
 // If the document does not exist, DataTo returns a NotFound error.
 func (d *DocumentSnapshot) DataTo(p interface{}) error {

@@ -15,11 +15,11 @@
 package trace
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 
 	"cloud.google.com/go/internal/tracecontext"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )

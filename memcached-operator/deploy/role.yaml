@@ -17,6 +17,12 @@ rules:
   verbs:
   - '*'
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
   - apps
   resources:
   - deployments
@@ -25,6 +31,13 @@ rules:
   - statefulsets
   verbs:
   - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
 - apiGroups:
   - cache.example.com
   resources:
