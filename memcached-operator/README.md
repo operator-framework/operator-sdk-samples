@@ -85,10 +85,10 @@ Then, configure the testing environment:
 
 ```
 $ export NAMESPACE="my-test"
-$ kubectl create deploy/crds/cache_v1alpha1_memcached_crd.yaml -n $NAMESPACE
-$ kubectl create deploy/service_account.yaml -n $NAMESPACE
-$ kubectl create deploy/role.yaml -n $NAMESPACE
-$ kubectl create deploy/role_binding.yaml -n $NAMESPACE
+$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml -n $NAMESPACE
+$ kubectl create -f deploy/service_account.yaml -n $NAMESPACE
+$ kubectl create -f deploy/role.yaml -n $NAMESPACE
+$ kubectl create -f deploy/role_binding.yaml -n $NAMESPACE
 ```
 
 Finally, run the tests:
