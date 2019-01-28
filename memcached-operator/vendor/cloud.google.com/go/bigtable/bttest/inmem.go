@@ -31,6 +31,7 @@ package bttest // import "cloud.google.com/go/bigtable/bttest"
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -45,7 +46,6 @@ import (
 	emptypb "github.com/golang/protobuf/ptypes/empty"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/btree"
-	"golang.org/x/net/context"
 	btapb "google.golang.org/genproto/googleapis/bigtable/admin/v2"
 	btpb "google.golang.org/genproto/googleapis/bigtable/v2"
 	"google.golang.org/genproto/googleapis/longrunning"
@@ -61,6 +61,10 @@ const (
 
 	// MilliSeconds field of the max valid Timestamp.
 	maxValidMilliSeconds = int64(time.Millisecond) * 253402300800
+)
+
+var (
+	validLabelTransformer = regexp.MustCompile(`[a-z0-9\-]{1,15}`)
 )
 
 // Server is an in-memory Cloud Bigtable fake.
@@ -259,9 +263,8 @@ func (s *server) DropRowRange(ctx context.Context, req *btapb.DropRowRangeReques
 			if strings.HasPrefix(r.key, prefix) {
 				rowsToDelete = append(rowsToDelete, r)
 				return true
-			} else {
-				return false // stop iteration
 			}
+			return false // stop iteration
 		})
 		for _, r := range rowsToDelete {
 			tbl.rows.Delete(r)
@@ -377,7 +380,13 @@ func (s *server) ReadRows(req *btpb.ReadRowsRequest, stream btpb.Bigtable_ReadRo
 
 	rows := make([]*row, 0, len(rowSet))
 	for _, r := range rowSet {
-		rows = append(rows, r)
+		r.mu.Lock()
+		fams := len(r.families)
+		r.mu.Unlock()
+
+		if fams != 0 {
+			rows = append(rows, r)
+		}
 	}
 	sort.Sort(byRowKey(rows))
 
@@ -422,7 +431,6 @@ func streamRow(stream btpb.Bigtable_ReadRowsServer, r *row, f *btpb.RowFilter) (
 			if len(cells) == 0 {
 				continue
 			}
-			// TODO(dsymonds): Apply transformers.
 			for _, cell := range cells {
 				rrr.Chunks = append(rrr.Chunks, &btpb.ReadRowsResponse_CellChunk{
 					RowKey:          []byte(r.key),
@@ -430,6 +438,7 @@ func streamRow(stream btpb.Bigtable_ReadRowsServer, r *row, f *btpb.RowFilter) (
 					Qualifier:       &wrappers.BytesValue{Value: []byte(colName)},
 					TimestampMicros: cell.ts,
 					Value:           cell.value,
+					Labels:          cell.labels,
 				})
 			}
 		}
@@ -550,10 +559,9 @@ func filterRow(f *btpb.RowFilter, r *row) (bool, error) {
 					fam.cells[col] = cs[offset:]
 					offset = 0
 					return true, nil
-				} else {
-					fam.cells[col] = cs[:0]
-					offset -= len(cs)
 				}
+				fam.cells[col] = cs[:0]
+				offset -= len(cs)
 			}
 		}
 		return true, nil
@@ -592,23 +600,35 @@ func filterCells(f *btpb.RowFilter, fam, col string, cs []cell) ([]cell, error) 
 			return nil, err
 		}
 		if include {
-			cell = modifyCell(f, cell)
+			cell, err = modifyCell(f, cell)
+			if err != nil {
+				return nil, err
+			}
 			ret = append(ret, cell)
 		}
 	}
 	return ret, nil
 }
 
-func modifyCell(f *btpb.RowFilter, c cell) cell {
+func modifyCell(f *btpb.RowFilter, c cell) (cell, error) {
 	if f == nil {
-		return c
+		return c, nil
 	}
 	// Consider filters that may modify the cell contents
-	switch f.Filter.(type) {
+	switch filter := f.Filter.(type) {
 	case *btpb.RowFilter_StripValueTransformer:
-		return cell{ts: c.ts}
+		return cell{ts: c.ts}, nil
+	case *btpb.RowFilter_ApplyLabelTransformer:
+		if !validLabelTransformer.MatchString(filter.ApplyLabelTransformer) {
+			return cell{}, status.Errorf(
+				codes.InvalidArgument,
+				`apply_label_transformer must match RE2([a-z0-9\-]+), but found %v`,
+				filter.ApplyLabelTransformer,
+			)
+		}
+		return cell{ts: c.ts, value: c.value, labels: []string{filter.ApplyLabelTransformer}}, nil
 	default:
-		return c
+		return c, nil
 	}
 }
 
@@ -625,6 +645,9 @@ func includeCell(f *btpb.RowFilter, fam, col string, cell cell) (bool, error) {
 		// Don't log, row-level filter
 		return true, nil
 	case *btpb.RowFilter_StripValueTransformer:
+		// Don't log, cell-modifying filter
+		return true, nil
+	case *btpb.RowFilter_ApplyLabelTransformer:
 		// Don't log, cell-modifying filter
 		return true, nil
 	default:
@@ -1351,8 +1374,9 @@ func (f *family) cellsByColumn(name string) []cell {
 }
 
 type cell struct {
-	ts    int64
-	value []byte
+	ts     int64
+	value  []byte
+	labels []string
 }
 
 type byDescTS []cell

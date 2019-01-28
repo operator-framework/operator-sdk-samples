@@ -22,6 +22,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/ansible/events"
 	"github.com/operator-framework/operator-sdk/pkg/ansible/runner"
+	"github.com/operator-framework/operator-sdk/pkg/predicate"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,15 +38,17 @@ var log = logf.Log.WithName("ansible-controller")
 
 // Options - options for your controller
 type Options struct {
-	EventHandlers   []events.EventHandler
-	LoggingLevel    events.LogLevel
-	Runner          runner.Runner
-	GVK             schema.GroupVersionKind
-	ReconcilePeriod time.Duration
+	EventHandlers           []events.EventHandler
+	LoggingLevel            events.LogLevel
+	Runner                  runner.Runner
+	GVK                     schema.GroupVersionKind
+	ReconcilePeriod         time.Duration
+	ManageStatus            bool
+	WatchDependentResources bool
 }
 
 // Add - Creates a new ansible operator controller and adds it to the manager
-func Add(mgr manager.Manager, options Options) {
+func Add(mgr manager.Manager, options Options) *controller.Controller {
 	log.Info("Watching resource", "Options.Group", options.GVK.Group, "Options.Version", options.GVK.Version, "Options.Kind", options.GVK.Kind)
 	if options.EventHandlers == nil {
 		options.EventHandlers = []events.EventHandler{}
@@ -58,8 +61,16 @@ func Add(mgr manager.Manager, options Options) {
 		Runner:          options.Runner,
 		EventHandlers:   eventHandlers,
 		ReconcilePeriod: options.ReconcilePeriod,
+		ManageStatus:    options.ManageStatus,
 	}
 
+	if mgr.GetScheme().IsVersionRegistered(schema.GroupVersion{
+		Group:   options.GVK.Group,
+		Version: options.GVK.Version,
+	}) {
+		log.Info("Version already registered... skipping")
+		return nil
+	}
 	// Register the GVK with the schema
 	mgr.GetScheme().AddKnownTypeWithName(options.GVK, &unstructured.Unstructured{})
 	metav1.AddToGroupVersion(mgr.GetScheme(), schema.GroupVersion{
@@ -77,8 +88,9 @@ func Add(mgr manager.Manager, options Options) {
 	}
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(options.GVK)
-	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}); err != nil {
+	if err := c.Watch(&source.Kind{Type: u}, &crthandler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
+	return &c
 }

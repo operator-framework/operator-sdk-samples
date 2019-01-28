@@ -15,8 +15,9 @@
 package vision
 
 import (
-	gax "github.com/googleapis/gax-go"
-	"golang.org/x/net/context"
+	"context"
+
+	gax "github.com/googleapis/gax-go/v2"
 	pb "google.golang.org/genproto/googleapis/cloud/vision/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -157,4 +158,13 @@ func (c *ImageAnnotatorClient) LocalizeObjects(ctx context.Context, img *pb.Imag
 		return nil, err
 	}
 	return res.LocalizedObjectAnnotations, nil
+}
+
+// ProductSearch searches the image for products.
+func (c *ImageAnnotatorClient) ProductSearch(ctx context.Context, img *pb.Image, ictx *pb.ImageContext, opts ...gax.CallOption) (*pb.ProductSearchResults, error) {
+	res, err := c.annotateOne(ctx, img, ictx, pb.Feature_PRODUCT_SEARCH, 0, opts)
+	if err != nil {
+		return nil, err
+	}
+	return res.ProductSearchResults, nil
 }

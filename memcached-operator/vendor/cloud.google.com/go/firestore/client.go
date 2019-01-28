@@ -15,23 +15,20 @@
 package firestore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
-	"google.golang.org/api/iterator"
-
 	vkit "cloud.google.com/go/firestore/apiv1beta1"
-
 	"cloud.google.com/go/internal/version"
-	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
-
 	"github.com/golang/protobuf/ptypes"
-	gax "github.com/googleapis/gax-go"
-	"golang.org/x/net/context"
+	gax "github.com/googleapis/gax-go/v2"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -128,9 +125,6 @@ func (c *Client) idsToRef(IDs []string, dbPath string) (*CollectionRef, *Documen
 //
 // If a document is not present, the corresponding DocumentSnapshot's Exists method will return false.
 func (c *Client) GetAll(ctx context.Context, docRefs []*DocumentRef) ([]*DocumentSnapshot, error) {
-	if err := checkTransaction(ctx); err != nil {
-		return nil, err
-	}
 	return c.getAll(ctx, docRefs, nil)
 }
 
@@ -201,7 +195,6 @@ func (c *Client) getAll(ctx context.Context, docRefs []*DocumentRef, tid []byte)
 // Collections returns an interator over the top-level collections.
 func (c *Client) Collections(ctx context.Context) *CollectionIterator {
 	it := &CollectionIterator{
-		err:    checkTransaction(ctx),
 		client: c,
 		it: c.c.ListCollectionIds(
 			withResourceHeader(ctx, c.path()),
@@ -221,9 +214,6 @@ func (c *Client) Batch() *WriteBatch {
 
 // commit calls the Commit RPC outside of a transaction.
 func (c *Client) commit(ctx context.Context, ws []*pb.Write) ([]*WriteResult, error) {
-	if err := checkTransaction(ctx); err != nil {
-		return nil, err
-	}
 	req := &pb.CommitRequest{
 		Database: c.path(),
 		Writes:   ws,
