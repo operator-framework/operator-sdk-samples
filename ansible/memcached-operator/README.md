@@ -36,7 +36,7 @@ To uninstall the Deployment and the Memcached Ansible Operator, run the followin
 
 1. Uninstall
     ```bash
-    kubectl delete -f deploy/crds/bitcoin_v1_bitd_cr.yaml
+    kubectl delete -f deploy/crds/cache_v1alpha1_memcached_cr.yaml
     ```
 1. Uninstall Memcached Ansible Operator
     ```bash
