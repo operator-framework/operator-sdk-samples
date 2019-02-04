@@ -1,6 +1,0 @@
-- hosts: localhost
-  gather_facts: no
-  tasks:
-  - set_fact:
-      test_{{item|replace('.','_')}}: "{{ q('mysql_status', item, user='testing', passwd='testing') }}"
-    loop: ['localhost', '127.0.0.1']

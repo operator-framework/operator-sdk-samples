@@ -12,6 +12,7 @@
           app: "{{ vault_app_name }}"
           vault_cluster: "{{ vault_cluster_name }}"
       spec:
+        serviceAccountName: "{{ vault_service_account_name  }}"
         size: "{{ etcd_cluster_size }}"
         TLS:
           static:

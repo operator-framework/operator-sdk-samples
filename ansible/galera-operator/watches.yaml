@@ -1,5 +1,0 @@
----
-- version: v1alpha1
-  group: galera.database.coreos.com
-  kind: GaleraService
-  playbook: /opt/ansible/playbook.yaml

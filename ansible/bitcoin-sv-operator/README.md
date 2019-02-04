@@ -8,12 +8,13 @@ This project was generated using [operator-sdk](https://github.com/operator-fram
 
 To deploy the operator:
 ```
-$ kubectl create -f deploy/rbac.yaml
-$ kubectl create -f deploy/crd.yaml
+$ kubectl create -f deploy/role.yaml
+$ kubectl create -f deploy/role_binding.yaml
+$ kubectl create -f deploy/crds/bitds_v1alpha1_bitd_crd.yaml
 $ kubectl create -f deploy/operator.yaml
 ```
 
 To launch an instance of Bitcoin SV:
 ```
-$ kubectl create -f deploy/cr.yaml
+$ kubectl create -f deploy/crds/bitds_v1alpha1_bitd_cr.yaml
 ```
