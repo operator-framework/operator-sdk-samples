@@ -8,54 +8,95 @@ import (
 	"context"
 	"sort"
 
+	"golang.org/x/tools/internal/lsp/cache"
 	"golang.org/x/tools/internal/lsp/protocol"
 	"golang.org/x/tools/internal/lsp/source"
+	"golang.org/x/tools/internal/span"
 )
 
-func (s *server) cacheAndDiagnose(ctx context.Context, uri protocol.DocumentURI, content string) {
-	sourceURI := fromProtocolURI(uri)
-	if err := s.setContent(ctx, sourceURI, []byte(content)); err != nil {
-		return // handle error?
+func (s *Server) cacheAndDiagnose(ctx context.Context, uri span.URI, content string) error {
+	view := s.findView(ctx, uri)
+	if err := view.SetContent(ctx, uri, []byte(content)); err != nil {
+		return err
 	}
 	go func() {
-		reports, err := source.Diagnostics(ctx, s.view, sourceURI)
+		ctx := view.BackgroundContext()
+		if ctx.Err() != nil {
+			return
+		}
+		reports, err := source.Diagnostics(ctx, view, uri)
 		if err != nil {
 			return // handle error?
 		}
-		for filename, diagnostics := range reports {
-			s.client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
-				URI:         protocol.DocumentURI(source.ToURI(filename)),
-				Diagnostics: toProtocolDiagnostics(ctx, s.view, diagnostics),
-			})
+
+		s.undeliveredMu.Lock()
+		defer s.undeliveredMu.Unlock()
+
+		for uri, diagnostics := range reports {
+			if err := s.publishDiagnostics(ctx, view, uri, diagnostics); err != nil {
+				if s.undelivered == nil {
+					s.undelivered = make(map[span.URI][]source.Diagnostic)
+				}
+				s.undelivered[uri] = diagnostics
+				continue
+			}
+			// In case we had old, undelivered diagnostics.
+			delete(s.undelivered, uri)
+		}
+		// Anytime we compute diagnostics, make sure to also send along any
+		// undelivered ones (only for remaining URIs).
+		for uri, diagnostics := range s.undelivered {
+			s.publishDiagnostics(ctx, view, uri, diagnostics)
+
+			// If we fail to deliver the same diagnostics twice, just give up.
+			delete(s.undelivered, uri)
 		}
 	}()
-}
-
-func (s *server) setContent(ctx context.Context, uri source.URI, content []byte) error {
-	v, err := s.view.SetContent(ctx, uri, content)
-	if err != nil {
-		return err
-	}
-
-	s.viewMu.Lock()
-	s.view = v
-	s.viewMu.Unlock()
-
 	return nil
 }
 
-func toProtocolDiagnostics(ctx context.Context, v source.View, diagnostics []source.Diagnostic) []protocol.Diagnostic {
+func (s *Server) publishDiagnostics(ctx context.Context, view *cache.View, uri span.URI, diagnostics []source.Diagnostic) error {
+	protocolDiagnostics, err := toProtocolDiagnostics(ctx, view, diagnostics)
+	if err != nil {
+		return err
+	}
+	s.client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
+		Diagnostics: protocolDiagnostics,
+		URI:         protocol.NewURI(uri),
+	})
+	return nil
+}
+
+func toProtocolDiagnostics(ctx context.Context, v source.View, diagnostics []source.Diagnostic) ([]protocol.Diagnostic, error) {
 	reports := []protocol.Diagnostic{}
 	for _, diag := range diagnostics {
-		tok := v.FileSet().File(diag.Start)
+		_, m, err := newColumnMap(ctx, v, diag.Span.URI())
+		if err != nil {
+			return nil, err
+		}
+		src := diag.Source
+		if src == "" {
+			src = "LSP"
+		}
+		var severity protocol.DiagnosticSeverity
+		switch diag.Severity {
+		case source.SeverityError:
+			severity = protocol.SeverityError
+		case source.SeverityWarning:
+			severity = protocol.SeverityWarning
+		}
+		rng, err := m.Range(diag.Span)
+		if err != nil {
+			return nil, err
+		}
 		reports = append(reports, protocol.Diagnostic{
 			Message:  diag.Message,
-			Range:    toProtocolRange(tok, diag.Range),
-			Severity: protocol.SeverityError, // all diagnostics have error severity for now
-			Source:   "LSP",
+			Range:    rng,
+			Severity: severity,
+			Source:   src,
 		})
 	}
-	return reports
+	return reports, nil
 }
 
 func sorted(d []protocol.Diagnostic) {

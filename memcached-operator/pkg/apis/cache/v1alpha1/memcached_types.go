@@ -8,11 +8,13 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MemcachedSpec defines the desired state of Memcached
+// +k8s:openapi-gen=true
 type MemcachedSpec struct {
 	Size int32 `json:"size"`
 }
 
 // MemcachedStatus defines the observed state of Memcached
+// +k8s:openapi-gen=true
 type MemcachedStatus struct {
 	Nodes []string `json:"nodes"`
 }

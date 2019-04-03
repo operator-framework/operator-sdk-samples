@@ -63,7 +63,19 @@ func defaultSubscriberCallOptions() *SubscriberCallOptions {
 		{"default", "idempotent"}: {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
-					codes.DeadlineExceeded,
+					codes.Aborted,
+					codes.Unavailable,
+					codes.Unknown,
+				}, gax.Backoff{
+					Initial:    100 * time.Millisecond,
+					Max:        60000 * time.Millisecond,
+					Multiplier: 1.3,
+				})
+			}),
+		},
+		{"default", "non_idempotent"}: {
+			gax.WithRetry(func() gax.Retryer {
+				return gax.OnCodes([]codes.Code{
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
@@ -75,8 +87,9 @@ func defaultSubscriberCallOptions() *SubscriberCallOptions {
 		{"messaging", "idempotent"}: {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
-					codes.DeadlineExceeded,
+					codes.Aborted,
 					codes.Unavailable,
+					codes.Unknown,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
 					Max:        60000 * time.Millisecond,
@@ -84,26 +97,9 @@ func defaultSubscriberCallOptions() *SubscriberCallOptions {
 				})
 			}),
 		},
-		{"messaging", "pull"}: {
+		{"messaging", "non_idempotent"}: {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
-					codes.DeadlineExceeded,
-					codes.Internal,
-					codes.ResourceExhausted,
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.3,
-				})
-			}),
-		},
-		{"streaming_messaging", "pull"}: {
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.DeadlineExceeded,
-					codes.Internal,
-					codes.ResourceExhausted,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
@@ -116,19 +112,19 @@ func defaultSubscriberCallOptions() *SubscriberCallOptions {
 	return &SubscriberCallOptions{
 		CreateSubscription: retry[[2]string{"default", "idempotent"}],
 		GetSubscription:    retry[[2]string{"default", "idempotent"}],
-		UpdateSubscription: retry[[2]string{"default", "idempotent"}],
+		UpdateSubscription: retry[[2]string{"default", "non_idempotent"}],
 		ListSubscriptions:  retry[[2]string{"default", "idempotent"}],
-		DeleteSubscription: retry[[2]string{"default", "idempotent"}],
+		DeleteSubscription: retry[[2]string{"default", "non_idempotent"}],
 		ModifyAckDeadline:  retry[[2]string{"default", "non_idempotent"}],
-		Acknowledge:        retry[[2]string{"messaging", "idempotent"}],
-		Pull:               retry[[2]string{"messaging", "pull"}],
-		StreamingPull:      retry[[2]string{"streaming_messaging", "pull"}],
+		Acknowledge:        retry[[2]string{"messaging", "non_idempotent"}],
+		Pull:               retry[[2]string{"messaging", "idempotent"}],
+		StreamingPull:      retry[[2]string{"streaming_messaging", "none"}],
 		ModifyPushConfig:   retry[[2]string{"default", "non_idempotent"}],
 		ListSnapshots:      retry[[2]string{"default", "idempotent"}],
-		CreateSnapshot:     retry[[2]string{"default", "idempotent"}],
-		UpdateSnapshot:     retry[[2]string{"default", "idempotent"}],
-		DeleteSnapshot:     retry[[2]string{"default", "idempotent"}],
-		Seek:               retry[[2]string{"default", "non_idempotent"}],
+		CreateSnapshot:     retry[[2]string{"default", "non_idempotent"}],
+		UpdateSnapshot:     retry[[2]string{"default", "non_idempotent"}],
+		DeleteSnapshot:     retry[[2]string{"default", "non_idempotent"}],
+		Seek:               retry[[2]string{"default", "idempotent"}],
 	}
 }
 
@@ -198,9 +194,10 @@ func (c *SubscriberClient) SetGoogleClientInfo(keyval ...string) {
 // If the name is not provided in the request, the server will assign a random
 // name for this subscription on the same project as the topic, conforming
 // to the
-// resource name format (at https://cloud.google.com/pubsub/docs/admin#resource_names).
-// The generated name is populated in the returned Subscription object.
-// Note that for REST API requests, you must specify a name in the request.
+// resource name
+// format (at https://cloud.google.com/pubsub/docs/admin#resource_names). The
+// generated name is populated in the returned Subscription object. Note that
+// for REST API requests, you must specify a name in the request.
 func (c *SubscriberClient) CreateSubscription(ctx context.Context, req *pubsubpb.Subscription, opts ...gax.CallOption) (*pubsubpb.Subscription, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.CreateSubscription[0:len(c.CallOptions.CreateSubscription):len(c.CallOptions.CreateSubscription)], opts...)
@@ -456,9 +453,10 @@ func (c *SubscriberClient) ListSnapshots(ctx context.Context, req *pubsubpb.List
 // the request, the server will assign a random
 // name for this snapshot on the same project as the subscription, conforming
 // to the
-// resource name format (at https://cloud.google.com/pubsub/docs/admin#resource_names).
-// The generated name is populated in the returned Snapshot object. Note that
-// for REST API requests, you must specify a name in the request.
+// resource name
+// format (at https://cloud.google.com/pubsub/docs/admin#resource_names). The
+// generated name is populated in the returned Snapshot object. Note that for
+// REST API requests, you must specify a name in the request.
 func (c *SubscriberClient) CreateSnapshot(ctx context.Context, req *pubsubpb.CreateSnapshotRequest, opts ...gax.CallOption) (*pubsubpb.Snapshot, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.CreateSnapshot[0:len(c.CallOptions.CreateSnapshot):len(c.CallOptions.CreateSnapshot)], opts...)
