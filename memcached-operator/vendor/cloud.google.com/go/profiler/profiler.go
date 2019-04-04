@@ -156,17 +156,8 @@ type Config struct {
 	// for testing.
 	APIAddr string
 
-	// Instance is the name of Compute Engine instance the profiler agent runs
-	// on. This is normally determined from the Compute Engine metadata server
-	// and doesn't need to be initialized. It needs to be set in rare cases where
-	// the metadata server is present but is flaky or otherwise misbehave.
-	Instance string
-
-	// Zone is the zone of Compute Engine instance the profiler agent runs
-	// on. This is normally determined from the Compute Engine metadata server
-	// and doesn't need to be initialized. It needs to be set in rare cases where
-	// the metadata server is present but is flaky or otherwise misbehave.
-	Zone string
+	instance string
+	zone     string
 }
 
 // startError represents the error occurred during the
@@ -430,8 +421,8 @@ func withXGoogHeader(ctx context.Context, keyval ...string) context.Context {
 
 func initializeAgent(c pb.ProfilerServiceClient) *agent {
 	labels := map[string]string{languageLabel: "go"}
-	if config.Zone != "" {
-		labels[zoneNameLabel] = config.Zone
+	if config.zone != "" {
+		labels[zoneNameLabel] = config.zone
 	}
 	if config.ServiceVersion != "" {
 		labels[versionLabel] = config.ServiceVersion
@@ -444,8 +435,8 @@ func initializeAgent(c pb.ProfilerServiceClient) *agent {
 
 	profileLabels := map[string]string{}
 
-	if config.Instance != "" {
-		profileLabels[instanceLabel] = config.Instance
+	if config.instance != "" {
+		profileLabels[instanceLabel] = config.instance
 	}
 
 	profileTypes := []pb.ProfileType{pb.ProfileType_CPU}
@@ -474,12 +465,7 @@ func initializeConfig(cfg Config) error {
 	config = cfg
 
 	if config.Service == "" {
-		for _, ev := range []string{"GAE_SERVICE", "K_SERVICE"} {
-			if val := os.Getenv(ev); val != "" {
-				config.Service = val
-				break
-			}
-		}
+		config.Service = os.Getenv("GAE_SERVICE")
 	}
 	if config.Service == "" {
 		return errors.New("service name must be configured")
@@ -489,12 +475,7 @@ func initializeConfig(cfg Config) error {
 	}
 
 	if config.ServiceVersion == "" {
-		for _, ev := range []string{"GAE_VERSION", "K_REVISION"} {
-			if val := os.Getenv(ev); val != "" {
-				config.ServiceVersion = val
-				break
-			}
-		}
+		config.ServiceVersion = os.Getenv("GAE_VERSION")
 	}
 
 	if projectID := os.Getenv("GOOGLE_CLOUD_PROJECT"); config.ProjectID == "" && projectID != "" {
@@ -514,20 +495,17 @@ func initializeConfig(cfg Config) error {
 			}
 		}
 
-		if config.Zone == "" {
-			if config.Zone, err = getZone(); err != nil {
-				return fmt.Errorf("failed to get zone from Compute Engine metadata: %v", err)
-			}
+		if config.zone, err = getZone(); err != nil {
+			return fmt.Errorf("failed to get zone from Compute Engine metadata: %v", err)
 		}
 
-		if config.Instance == "" {
-			if config.Instance, err = getInstanceName(); err != nil {
-				if _, ok := err.(gcemd.NotDefinedError); !ok {
-					return fmt.Errorf("failed to get instance name from Compute Engine metadata: %v", err)
-				}
-				debugLog("failed to get instance name from Compute Engine metadata, will use empty name: %v", err)
+		if config.instance, err = getInstanceName(); err != nil {
+			if _, ok := err.(gcemd.NotDefinedError); !ok {
+				return fmt.Errorf("failed to get instance name from Compute Engine metadata: %v", err)
 			}
+			debugLog("failed to get instance name from Compute Engine metadata, will use empty name: %v", err)
 		}
+
 	} else {
 		if config.ProjectID == "" {
 			return fmt.Errorf("project ID must be specified in the configuration if running outside of GCP")

@@ -8,6 +8,7 @@ package stdmethods
 
 import (
 	"go/ast"
+	"go/token"
 	"go/types"
 	"strings"
 
@@ -162,7 +163,7 @@ func matchParams(pass *analysis.Pass, expect []string, actual *types.Tuple, pref
 		if i >= actual.Len() {
 			return false
 		}
-		if !matchParamType(x, actual.At(i).Type()) {
+		if !matchParamType(pass.Fset, pass.Pkg, x, actual.At(i).Type()) {
 			return false
 		}
 	}
@@ -173,8 +174,13 @@ func matchParams(pass *analysis.Pass, expect []string, actual *types.Tuple, pref
 }
 
 // Does this one type match?
-func matchParamType(expect string, actual types.Type) bool {
+func matchParamType(fset *token.FileSet, pkg *types.Package, expect string, actual types.Type) bool {
 	expect = strings.TrimPrefix(expect, "=")
+	// Strip package name if we're in that package.
+	if n := len(pkg.Name()); len(expect) > n && expect[:n] == pkg.Name() && expect[n] == '.' {
+		expect = expect[n+1:]
+	}
+
 	// Overkill but easy.
 	return typeString(actual) == expect
 }

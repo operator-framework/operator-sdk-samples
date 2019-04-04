@@ -38,7 +38,6 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewPrintDepsCmd())
 	cmd.AddCommand(NewMigrateCmd())
 	cmd.AddCommand(NewRunCmd())
-	cmd.AddCommand(NewOLMCatalogCmd())
 
 	return cmd
 }

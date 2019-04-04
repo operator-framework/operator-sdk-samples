@@ -15,13 +15,12 @@
 package main
 
 import (
-	"os"
-
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	if err := cmd.NewRootCmd().Execute(); err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }

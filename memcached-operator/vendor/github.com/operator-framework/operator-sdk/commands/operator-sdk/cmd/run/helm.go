@@ -17,28 +17,24 @@ package run
 import (
 	"github.com/operator-framework/operator-sdk/pkg/helm"
 	hoflags "github.com/operator-framework/operator-sdk/pkg/helm/flags"
-	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 
 	"github.com/spf13/cobra"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-// RunHelmCmd returns a command that will run a helm operator.
-func RunHelmCmd() *cobra.Command {
+// NewHelmCmd returns a command that will run a helm operator
+func NewHelmCmd() *cobra.Command {
 	var flags *hoflags.HelmOperatorFlags
-	runHelmCmd := &cobra.Command{
+	newCmd := &cobra.Command{
 		Use:   "helm",
 		Short: "Runs as a helm operator",
 		Long: `Runs as a helm operator. This is intended to be used when running
 in a Pod inside a cluster. Developers wanting to run their operator locally
 should use "up local" instead.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logf.SetLogger(zap.Logger())
-
-			return helm.Run(flags)
+		Run: func(cmd *cobra.Command, args []string) {
+			helm.Run(flags)
 		},
 	}
-	flags = hoflags.AddTo(runHelmCmd.Flags())
+	flags = hoflags.AddTo(newCmd.Flags())
 
-	return runHelmCmd
+	return newCmd
 }

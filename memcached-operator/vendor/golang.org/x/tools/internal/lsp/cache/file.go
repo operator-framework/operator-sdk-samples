@@ -5,122 +5,90 @@
 package cache
 
 import (
-	"context"
+	"fmt"
 	"go/ast"
 	"go/token"
 	"io/ioutil"
-	"path/filepath"
-	"strings"
 
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/internal/lsp/source"
-	"golang.org/x/tools/internal/span"
 )
 
 // File holds all the information we know about a file.
 type File struct {
-	uris     []span.URI
-	filename string
-	basename string
-
+	URI     source.URI
 	view    *View
 	active  bool
 	content []byte
 	ast     *ast.File
 	token   *token.File
-	pkg     *Package
-	meta    *metadata
-	imports []*ast.ImportSpec
+	pkg     *packages.Package
 }
 
-func basename(filename string) string {
-	return strings.ToLower(filepath.Base(filename))
-}
-
-func (f *File) URI() span.URI {
-	return f.uris[0]
-}
-
-// GetContent returns the contents of the file, reading it from file system if needed.
-func (f *File) GetContent(ctx context.Context) []byte {
+// Read returns the contents of the file, reading it from file system if needed.
+func (f *File) Read() ([]byte, error) {
 	f.view.mu.Lock()
 	defer f.view.mu.Unlock()
+	return f.read()
+}
 
-	if ctx.Err() == nil {
-		f.read(ctx)
+func (f *File) GetFileSet() (*token.FileSet, error) {
+	if f.view.Config.Fset == nil {
+		return nil, fmt.Errorf("no fileset for file view config")
 	}
-
-	return f.content
+	return f.view.Config.Fset, nil
 }
 
-func (f *File) GetFileSet(ctx context.Context) *token.FileSet {
-	return f.view.Config.Fset
-}
-
-func (f *File) GetToken(ctx context.Context) *token.File {
+func (f *File) GetToken() (*token.File, error) {
 	f.view.mu.Lock()
 	defer f.view.mu.Unlock()
-
-	if f.token == nil || len(f.view.contentChanges) > 0 {
-		if _, err := f.view.parse(ctx, f); err != nil {
-			return nil
+	if f.token == nil {
+		if err := f.view.parse(f.URI); err != nil {
+			return nil, err
+		}
+		if f.token == nil {
+			return nil, fmt.Errorf("failed to find or parse %v", f.URI)
 		}
 	}
-	return f.token
+	return f.token, nil
 }
 
-func (f *File) GetAST(ctx context.Context) *ast.File {
+func (f *File) GetAST() (*ast.File, error) {
 	f.view.mu.Lock()
 	defer f.view.mu.Unlock()
-
-	if f.ast == nil || len(f.view.contentChanges) > 0 {
-		if _, err := f.view.parse(ctx, f); err != nil {
-			return nil
+	if f.ast == nil {
+		if err := f.view.parse(f.URI); err != nil {
+			return nil, err
 		}
 	}
-	return f.ast
+	return f.ast, nil
 }
 
-func (f *File) GetPackage(ctx context.Context) source.Package {
+func (f *File) GetPackage() (*packages.Package, error) {
 	f.view.mu.Lock()
 	defer f.view.mu.Unlock()
-	if f.pkg == nil || len(f.view.contentChanges) > 0 {
-		errs, err := f.view.parse(ctx, f)
-		if err != nil {
-			// Create diagnostics for errors if we are able to.
-			if len(errs) > 0 {
-				return &Package{errors: errs}
-			}
-			return nil
+	if f.pkg == nil {
+		if err := f.view.parse(f.URI); err != nil {
+			return nil, err
 		}
 	}
-	return f.pkg
+	return f.pkg, nil
 }
 
-// read is the internal part of GetContent. It assumes that the caller is
-// holding the mutex of the file's view.
-func (f *File) read(ctx context.Context) {
+// read is the internal part of Read that presumes the lock is already held
+func (f *File) read() ([]byte, error) {
 	if f.content != nil {
-		if len(f.view.contentChanges) == 0 {
-			return
-		}
-
-		f.view.mcache.mu.Lock()
-		err := f.view.applyContentChanges(ctx)
-		f.view.mcache.mu.Unlock()
-
-		if err == nil {
-			return
-		}
+		return f.content, nil
 	}
-	// We don't know the content yet, so read it.
-	content, err := ioutil.ReadFile(f.filename)
+	// we don't know the content yet, so read it
+	filename, err := f.URI.Filename()
 	if err != nil {
-		return
+		return nil, err
+	}
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
 	}
 	f.content = content
-}
-
-// isPopulated returns true if all of the computed fields of the file are set.
-func (f *File) isPopulated() bool {
-	return f.ast != nil && f.token != nil && f.pkg != nil && f.meta != nil && f.imports != nil
+	return f.content, nil
 }

@@ -54,25 +54,13 @@ spec:
     spec:
       serviceAccountName: {{.ProjectName}}
       containers:
-        - name: ansible
-          command:
-          - /usr/local/bin/ao-logs
-          - /tmp/ansible-operator/runner
-          - stdout
+        - name: {{.ProjectName}}
           # Replace this with the built image name
           image: "{{ "{{ REPLACE_IMAGE }}" }}"
+          ports:
+          - containerPort: 60000
+            name: metrics
           imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-            readOnly: true
-        - name: operator
-          # Replace this with the built image name
-          image: "{{ "{{ REPLACE_IMAGE }}" }}"
-          imagePullPolicy: "{{ "{{ pull_policy|default('Always') }}"}}"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
           env:
             - name: WATCH_NAMESPACE
               {{- if .IsClusterScoped }}
@@ -88,7 +76,4 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "{{.ProjectName}}"
-      volumes:
-        - name: runner
-          emptyDir: {}
 `

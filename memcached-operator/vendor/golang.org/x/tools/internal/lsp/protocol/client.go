@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 
 	"golang.org/x/tools/internal/jsonrpc2"
-	"golang.org/x/tools/internal/lsp/xlog"
 )
 
 type Client interface {
@@ -25,13 +24,13 @@ type Client interface {
 	PublishDiagnostics(context.Context, *PublishDiagnosticsParams) error
 }
 
-func clientHandler(log xlog.Logger, client Client) jsonrpc2.Handler {
+func clientHandler(client Client) jsonrpc2.Handler {
 	return func(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
 		switch r.Method {
 		case "$/cancelRequest":
 			var params CancelParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
 			conn.Cancel(params.ID)
@@ -39,63 +38,51 @@ func clientHandler(log xlog.Logger, client Client) jsonrpc2.Handler {
 		case "window/showMessage":
 			var params ShowMessageParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.ShowMessage(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.ShowMessage(ctx, &params))
 
 		case "window/showMessageRequest":
 			var params ShowMessageRequestParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
 			resp, err := client.ShowMessageRequest(ctx, &params)
-			if err := conn.Reply(ctx, r, resp, err); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(conn.Reply(ctx, r, resp, err))
 
 		case "window/logMessage":
 			var params LogMessageParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.LogMessage(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.LogMessage(ctx, &params))
 
 		case "telemetry/event":
 			var params interface{}
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.Telemetry(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.Telemetry(ctx, &params))
 
 		case "client/registerCapability":
 			var params RegistrationParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.RegisterCapability(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.RegisterCapability(ctx, &params))
 
 		case "client/unregisterCapability":
 			var params UnregistrationParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.UnregisterCapability(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.UnregisterCapability(ctx, &params))
 
 		case "workspace/workspaceFolders":
 			if r.Params != nil {
@@ -103,41 +90,33 @@ func clientHandler(log xlog.Logger, client Client) jsonrpc2.Handler {
 				return
 			}
 			resp, err := client.WorkspaceFolders(ctx)
-			if err := conn.Reply(ctx, r, resp, err); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(conn.Reply(ctx, r, resp, err))
 
 		case "workspace/configuration":
 			var params ConfigurationParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
 			resp, err := client.Configuration(ctx, &params)
-			if err := conn.Reply(ctx, r, resp, err); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(conn.Reply(ctx, r, resp, err))
 
 		case "workspace/applyEdit":
 			var params ApplyWorkspaceEditParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
 			resp, err := client.ApplyEdit(ctx, &params)
-			if err := conn.Reply(ctx, r, resp, err); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(conn.Reply(ctx, r, resp, err))
 
 		case "textDocument/publishDiagnostics":
 			var params PublishDiagnosticsParams
 			if err := json.Unmarshal(*r.Params, &params); err != nil {
-				sendParseError(ctx, log, conn, r, err)
+				sendParseError(ctx, conn, r, err)
 				return
 			}
-			if err := client.PublishDiagnostics(ctx, &params); err != nil {
-				log.Errorf(ctx, "%v", err)
-			}
+			unhandledError(client.PublishDiagnostics(ctx, &params))
 
 		default:
 			if r.IsNotify() {

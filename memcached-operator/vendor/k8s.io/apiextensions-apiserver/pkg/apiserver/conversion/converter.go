@@ -20,74 +20,39 @@ import (
 	"fmt"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
-	apiextensionsfeatures "k8s.io/apiextensions-apiserver/pkg/features"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	"k8s.io/apiserver/pkg/util/webhook"
 )
 
-// CRConverterFactory is the factory for all CR converters.
-type CRConverterFactory struct {
-	// webhookConverterFactory is the factory for webhook converters.
-	// This field should not be used if CustomResourceWebhookConversion feature is disabled.
-	webhookConverterFactory *webhookConverterFactory
-}
-
-// NewCRConverterFactory creates a new CRConverterFactory
-func NewCRConverterFactory(serviceResolver webhook.ServiceResolver, authResolverWrapper webhook.AuthenticationInfoResolverWrapper) (*CRConverterFactory, error) {
-	converterFactory := &CRConverterFactory{}
-	if utilfeature.DefaultFeatureGate.Enabled(apiextensionsfeatures.CustomResourceWebhookConversion) {
-		webhookConverterFactory, err := newWebhookConverterFactory(serviceResolver, authResolverWrapper)
-		if err != nil {
-			return nil, err
-		}
-		converterFactory.webhookConverterFactory = webhookConverterFactory
-	}
-	return converterFactory, nil
-}
-
-// NewConverter returns a new CR converter based on the conversion settings in crd object.
-func (m *CRConverterFactory) NewConverter(crd *apiextensions.CustomResourceDefinition) (safe, unsafe runtime.ObjectConvertor, err error) {
+// NewCRDConverter returns a new CRD converter based on the conversion settings in crd object.
+func NewCRDConverter(crd *apiextensions.CustomResourceDefinition) (safe, unsafe runtime.ObjectConvertor) {
 	validVersions := map[schema.GroupVersion]bool{}
 	for _, version := range crd.Spec.Versions {
 		validVersions[schema.GroupVersion{Group: crd.Spec.Group, Version: version.Name}] = true
 	}
 
-	switch crd.Spec.Conversion.Strategy {
-	case apiextensions.NoneConverter:
-		unsafe = &crConverter{
-			clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
-			delegate: &nopConverter{
-				validVersions: validVersions,
-			},
-		}
-		return &safeConverterWrapper{unsafe}, unsafe, nil
-	case apiextensions.WebhookConverter:
-		if !utilfeature.DefaultFeatureGate.Enabled(apiextensionsfeatures.CustomResourceWebhookConversion) {
-			return nil, nil, fmt.Errorf("webhook conversion is disabled on this cluster")
-		}
-		unsafe, err := m.webhookConverterFactory.NewWebhookConverter(validVersions, crd)
-		if err != nil {
-			return nil, nil, err
-		}
-		return &safeConverterWrapper{unsafe}, unsafe, nil
+	// The only converter right now is nopConverter. More converters will be returned based on the
+	// CRD object when they introduced.
+	unsafe = &crdConverter{
+		clusterScoped: crd.Spec.Scope == apiextensions.ClusterScoped,
+		delegate: &nopConverter{
+			validVersions: validVersions,
+		},
 	}
-
-	return nil, nil, fmt.Errorf("unknown conversion strategy %q for CRD %s", crd.Spec.Conversion.Strategy, crd.Name)
+	return &safeConverterWrapper{unsafe}, unsafe
 }
 
-var _ runtime.ObjectConvertor = &crConverter{}
+var _ runtime.ObjectConvertor = &crdConverter{}
 
-// crConverter extends the delegate with generic CR conversion behaviour. The delegate will implement the
+// crdConverter extends the delegate with generic CRD conversion behaviour. The delegate will implement the
 // user defined conversion strategy given in the CustomResourceDefinition.
-type crConverter struct {
+type crdConverter struct {
 	delegate      runtime.ObjectConvertor
 	clusterScoped bool
 }
 
-func (c *crConverter) ConvertFieldLabel(gvk schema.GroupVersionKind, label, value string) (string, string, error) {
+func (c *crdConverter) ConvertFieldLabel(gvk schema.GroupVersionKind, label, value string) (string, string, error) {
 	// We currently only support metadata.namespace and metadata.name.
 	switch {
 	case label == "metadata.name":
@@ -99,12 +64,12 @@ func (c *crConverter) ConvertFieldLabel(gvk schema.GroupVersionKind, label, valu
 	}
 }
 
-func (c *crConverter) Convert(in, out, context interface{}) error {
+func (c *crdConverter) Convert(in, out, context interface{}) error {
 	return c.delegate.Convert(in, out, context)
 }
 
 // ConvertToVersion converts in object to the given gvk in place and returns the same `in` object.
-func (c *crConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
+func (c *crdConverter) ConvertToVersion(in runtime.Object, target runtime.GroupVersioner) (runtime.Object, error) {
 	// Run the converter on the list items instead of list itself
 	if list, ok := in.(*unstructured.UnstructuredList); ok {
 		for i := range list.Items {

@@ -38,8 +38,6 @@ func main() {
 		&ansible.DockerfileHybrid{},
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
-		&ansible.K8sStatus{},
-		&ansible.AoLogs{},
 	)
 	if err != nil {
 		log.Fatalf("Add scaffold failed: (%v)", err)

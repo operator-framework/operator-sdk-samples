@@ -50,7 +50,6 @@ platforms:
   - k8s
   image: bsycorp/kind:latest-1.12
   privileged: True
-  override_command: no
   exposed_ports:
     - 8443/tcp
     - 10080/tcp

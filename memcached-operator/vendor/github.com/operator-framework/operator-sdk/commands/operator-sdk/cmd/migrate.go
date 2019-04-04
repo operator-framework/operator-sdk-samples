@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -35,13 +34,13 @@ func NewMigrateCmd() *cobra.Command {
 		Use:   "migrate",
 		Short: "Adds source code to an operator",
 		Long:  `operator-sdk migrate adds a main.go source file and any associated source files for an operator that is not of the "go" type.`,
-		RunE:  migrateRun,
+		Run:   migrateRun,
 	}
 }
 
 // migrateRun determines the current operator type and runs the corresponding
 // migrate function.
-func migrateRun(cmd *cobra.Command, args []string) error {
+func migrateRun(cmd *cobra.Command, args []string) {
 	projutil.MustInProjectRoot()
 
 	_ = projutil.CheckAndGetProjectGoPkg()
@@ -49,15 +48,16 @@ func migrateRun(cmd *cobra.Command, args []string) error {
 	opType := projutil.GetOperatorType()
 	switch opType {
 	case projutil.OperatorTypeAnsible:
-		return migrateAnsible()
+		migrateAnsible()
 	case projutil.OperatorTypeHelm:
-		return migrateHelm()
+		migrateHelm()
+	default:
+		log.Fatalf("Operator of type %s cannot be migrated.", opType)
 	}
-	return fmt.Errorf("operator of type %s cannot be migrated", opType)
 }
 
 // migrateAnsible runs the migration process for an ansible-based operator
-func migrateAnsible() error {
+func migrateAnsible() {
 	wd := projutil.MustGetwd()
 
 	cfg := &input.Config{
@@ -69,19 +69,17 @@ func migrateAnsible() error {
 		Watches: true,
 		Roles:   true,
 	}
-	_, err := os.Stat(ansible.PlaybookYamlFile)
+	_, err := os.Stat("playbook.yml")
 	switch {
 	case err == nil:
 		dockerfile.Playbook = true
 	case os.IsNotExist(err):
 		log.Info("No playbook was found, so not including it in the new Dockerfile")
 	default:
-		return fmt.Errorf("error trying to stat %s: (%v)", ansible.PlaybookYamlFile, err)
+		log.Fatalf("Error trying to stat playbook.yml: (%v)", err)
 	}
 
-	if err := renameDockerfile(); err != nil {
-		return err
-	}
+	renameDockerfile()
 
 	s := &scaffold.Scaffold{}
 	err = s.Execute(cfg,
@@ -90,17 +88,14 @@ func migrateAnsible() error {
 		&dockerfile,
 		&ansible.Entrypoint{},
 		&ansible.UserSetup{},
-		&ansible.K8sStatus{},
-		&ansible.AoLogs{},
 	)
 	if err != nil {
-		return fmt.Errorf("migrate ansible scaffold failed: (%v)", err)
+		log.Fatalf("Migrate scaffold failed: (%v)", err)
 	}
-	return nil
 }
 
 // migrateHelm runs the migration process for a helm-based operator
-func migrateHelm() error {
+func migrateHelm() {
 	wd := projutil.MustGetwd()
 
 	cfg := &input.Config{
@@ -108,9 +103,7 @@ func migrateHelm() error {
 		ProjectName:    filepath.Base(wd),
 	}
 
-	if err := renameDockerfile(); err != nil {
-		return err
-	}
+	renameDockerfile()
 
 	s := &scaffold.Scaffold{}
 	err := s.Execute(cfg,
@@ -124,18 +117,16 @@ func migrateHelm() error {
 		&helm.UserSetup{},
 	)
 	if err != nil {
-		return fmt.Errorf("migrate helm scaffold failed: (%v)", err)
+		log.Fatalf("Migrate scaffold failed: (%v)", err)
 	}
-	return nil
 }
 
-func renameDockerfile() error {
+func renameDockerfile() {
 	dockerfilePath := filepath.Join(scaffold.BuildDir, scaffold.DockerfileFile)
 	newDockerfilePath := dockerfilePath + ".sdkold"
 	err := os.Rename(dockerfilePath, newDockerfilePath)
 	if err != nil {
-		return fmt.Errorf("failed to rename Dockerfile: (%v)", err)
+		log.Fatalf("Failed to rename Dockerfile: (%v)", err)
 	}
 	log.Infof("Renamed Dockerfile to %s and replaced with newer version. Compare the new Dockerfile to your old one and manually migrate any customizations", newDockerfilePath)
-	return nil
 }

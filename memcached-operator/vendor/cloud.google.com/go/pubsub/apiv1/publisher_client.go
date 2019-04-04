@@ -55,19 +55,7 @@ func defaultPublisherCallOptions() *PublisherCallOptions {
 		{"default", "idempotent"}: {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
-					codes.Aborted,
-					codes.Unavailable,
-					codes.Unknown,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.3,
-				})
-			}),
-		},
-		{"default", "non_idempotent"}: {
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
@@ -76,7 +64,7 @@ func defaultPublisherCallOptions() *PublisherCallOptions {
 				})
 			}),
 		},
-		{"messaging", "publish"}: {
+		{"messaging", "one_plus_delivery"}: {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
@@ -95,13 +83,13 @@ func defaultPublisherCallOptions() *PublisherCallOptions {
 		},
 	}
 	return &PublisherCallOptions{
-		CreateTopic:            retry[[2]string{"default", "non_idempotent"}],
-		UpdateTopic:            retry[[2]string{"default", "non_idempotent"}],
-		Publish:                retry[[2]string{"messaging", "publish"}],
+		CreateTopic:            retry[[2]string{"default", "idempotent"}],
+		UpdateTopic:            retry[[2]string{"default", "idempotent"}],
+		Publish:                retry[[2]string{"messaging", "one_plus_delivery"}],
 		GetTopic:               retry[[2]string{"default", "idempotent"}],
 		ListTopics:             retry[[2]string{"default", "idempotent"}],
 		ListTopicSubscriptions: retry[[2]string{"default", "idempotent"}],
-		DeleteTopic:            retry[[2]string{"default", "non_idempotent"}],
+		DeleteTopic:            retry[[2]string{"default", "idempotent"}],
 	}
 }
 

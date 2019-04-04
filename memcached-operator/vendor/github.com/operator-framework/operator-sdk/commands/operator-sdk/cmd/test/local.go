@@ -58,7 +58,7 @@ func NewTestLocalCmd() *cobra.Command {
 	testCmd := &cobra.Command{
 		Use:   "local <path to tests directory> [flags]",
 		Short: "Run End-To-End tests locally",
-		RunE:  testLocalFunc,
+		Run:   testLocalFunc,
 	}
 	testCmd.Flags().StringVar(&tlConfig.kubeconfig, "kubeconfig", "", "Kubeconfig path")
 	testCmd.Flags().StringVar(&tlConfig.globalManPath, "global-manifest", "", "Path to manifest for Global resources (e.g. CRD manifests)")
@@ -74,20 +74,20 @@ func NewTestLocalCmd() *cobra.Command {
 	return testCmd
 }
 
-func testLocalFunc(cmd *cobra.Command, args []string) error {
-	t := projutil.GetOperatorType()
-	switch t {
+func testLocalFunc(cmd *cobra.Command, args []string) {
+	switch projutil.GetOperatorType() {
 	case projutil.OperatorTypeGo:
-		return testLocalGoFunc(cmd, args)
+		testLocalGoFunc(cmd, args)
 	case projutil.OperatorTypeAnsible:
-		return testLocalAnsibleFunc(cmd, args)
+		testLocalAnsibleFunc(cmd, args)
 	case projutil.OperatorTypeHelm:
-		return fmt.Errorf("`test local` for Helm operators is not implemented")
+		log.Fatal("`test local` for Helm operators is not implemented")
+	default:
+		log.Fatal("Failed to determine operator type")
 	}
-	return fmt.Errorf("unknown operator type '%v'", t)
 }
 
-func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
+func testLocalAnsibleFunc(cmd *cobra.Command, args []string) {
 	projutil.MustInProjectRoot()
 	testArgs := []string{}
 	if tlConfig.debug {
@@ -102,92 +102,77 @@ func testLocalAnsibleFunc(cmd *cobra.Command, args []string) error {
 	dc := exec.Command("molecule", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	return projutil.ExecCmd(dc)
+	dc.Stdout = os.Stdout
+	dc.Stderr = os.Stderr
+	err := dc.Run()
+	if err != nil {
+		log.Fatalf("Failed to exec `molecule %s`: (%v)", strings.Join(testArgs, " "), err)
+	}
 }
 
-func testLocalGoFunc(cmd *cobra.Command, args []string) error {
+func testLocalGoFunc(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
+		log.Fatalf("Command %s requires exactly one argument", cmd.CommandPath())
 	}
-	if (tlConfig.noSetup && tlConfig.globalManPath != "") ||
-		(tlConfig.noSetup && tlConfig.namespacedManPath != "") {
-		return fmt.Errorf("the global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
+	if (tlConfig.noSetup && tlConfig.globalManPath != "") || (tlConfig.noSetup && tlConfig.namespacedManPath != "") {
+		log.Fatal("The global-manifest and namespaced-manifest flags cannot be enabled at the same time as the no-setup flag")
 	}
 
 	if tlConfig.upLocal && tlConfig.namespace == "" {
-		return fmt.Errorf("must specify a namespace to run in when -up-local flag is set")
+		log.Fatal("Must specify a namespace to run in when -up-local flag is set")
 	}
 
 	log.Info("Testing operator locally.")
 
 	// if no namespaced manifest path is given, combine deploy/service_account.yaml, deploy/role.yaml, deploy/role_binding.yaml and deploy/operator.yaml
 	if tlConfig.namespacedManPath == "" && !tlConfig.noSetup {
-		if !tlConfig.upLocal {
-			file, err := yamlutil.GenerateCombinedNamespacedManifest(scaffold.DeployDir)
-			if err != nil {
-				return err
-			}
-			tlConfig.namespacedManPath = file.Name()
-		} else {
-			file, err := ioutil.TempFile("", "empty.yaml")
-			if err != nil {
-				return fmt.Errorf("could not create empty manifest file: (%v)", err)
-			}
-			tlConfig.namespacedManPath = file.Name()
-			emptyBytes := []byte{}
-			if err := file.Chmod(os.FileMode(fileutil.DefaultFileMode)); err != nil {
-				return fmt.Errorf("could not chown temporary namespaced manifest file: (%v)", err)
-			}
-			if _, err := file.Write(emptyBytes); err != nil {
-				return fmt.Errorf("could not write temporary namespaced manifest file: (%v)", err)
-			}
-			if err := file.Close(); err != nil {
-				return err
-			}
+		file, err := yamlutil.GenerateCombinedNamespacedManifest()
+		if err != nil {
+			log.Fatal(err)
 		}
+		tlConfig.namespacedManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.namespacedManPath)
 			if err != nil {
-				log.Errorf("Could not delete temporary namespace manifest file: (%v)", err)
+				log.Fatalf("Could not delete temporary namespace manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.globalManPath == "" && !tlConfig.noSetup {
-		file, err := yamlutil.GenerateCombinedGlobalManifest(scaffold.CRDsDir)
+		file, err := yamlutil.GenerateCombinedGlobalManifest()
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 		tlConfig.globalManPath = file.Name()
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Errorf("Could not delete global manifest file: (%v)", err)
+				log.Fatalf("Could not delete global manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.noSetup {
 		err := os.MkdirAll(deployTestDir, os.FileMode(fileutil.DefaultDirFileMode))
 		if err != nil {
-			return fmt.Errorf("could not create %s: (%v)", deployTestDir, err)
+			log.Fatalf("Could not create %s: (%v)", deployTestDir, err)
 		}
 		tlConfig.namespacedManPath = filepath.Join(deployTestDir, "empty.yaml")
 		tlConfig.globalManPath = filepath.Join(deployTestDir, "empty.yaml")
 		emptyBytes := []byte{}
 		err = ioutil.WriteFile(tlConfig.globalManPath, emptyBytes, os.FileMode(fileutil.DefaultFileMode))
 		if err != nil {
-			return fmt.Errorf("could not create empty manifest file: (%v)", err)
+			log.Fatalf("Could not create empty manifest file: (%v)", err)
 		}
 		defer func() {
 			err := os.Remove(tlConfig.globalManPath)
 			if err != nil {
-				log.Errorf("Could not delete empty manifest file: (%v)", err)
+				log.Fatalf("Could not delete empty manifest file: (%v)", err)
 			}
 		}()
 	}
 	if tlConfig.image != "" {
-		err := replaceImage(tlConfig.namespacedManPath, tlConfig.image)
-		if err != nil {
-			return fmt.Errorf("failed to overwrite operator image in the namespaced manifest: %v", err)
+		if err := replaceImage(tlConfig.namespacedManPath, tlConfig.image); err != nil {
+			log.Fatalf("Failed to overwrite operator image in the namespaced manifest: %v", err)
 		}
 	}
 	testArgs := []string{"test", args[0] + "/..."}
@@ -211,12 +196,14 @@ func testLocalGoFunc(cmd *cobra.Command, args []string) error {
 	dc := exec.Command("go", testArgs...)
 	dc.Env = append(os.Environ(), fmt.Sprintf("%v=%v", test.TestNamespaceEnv, tlConfig.namespace))
 	dc.Dir = projutil.MustGetwd()
-	if err := projutil.ExecCmd(dc); err != nil {
-		return err
+	dc.Stdout = os.Stdout
+	dc.Stderr = os.Stderr
+	err := dc.Run()
+	if err != nil {
+		log.Fatalf("Failed to exec `go %s`: (%v)", strings.Join(testArgs, " "), err)
 	}
 
 	log.Info("Local operator test successfully completed.")
-	return nil
 }
 
 // TODO: add support for multiple deployments and containers (user would have to

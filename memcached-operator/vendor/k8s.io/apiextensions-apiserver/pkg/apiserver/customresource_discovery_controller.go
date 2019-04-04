@@ -21,7 +21,7 @@ import (
 	"sort"
 	"time"
 
-	"k8s.io/klog"
+	"github.com/golang/glog"
 
 	autoscaling "k8s.io/api/autoscaling/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,11 +136,7 @@ func (c *DiscoveryController) sync(version schema.GroupVersion) error {
 			Categories:   crd.Status.AcceptedNames.Categories,
 		})
 
-		subresources, err := getSubresourcesForVersion(crd, version.Version)
-		if err != nil {
-			return err
-		}
-		if subresources != nil && subresources.Status != nil {
+		if crd.Spec.Subresources != nil && crd.Spec.Subresources.Status != nil {
 			apiResourcesForDiscovery = append(apiResourcesForDiscovery, metav1.APIResource{
 				Name:       crd.Status.AcceptedNames.Plural + "/status",
 				Namespaced: crd.Spec.Scope == apiextensions.NamespaceScoped,
@@ -149,7 +145,7 @@ func (c *DiscoveryController) sync(version schema.GroupVersion) error {
 			})
 		}
 
-		if subresources != nil && subresources.Scale != nil {
+		if crd.Spec.Subresources != nil && crd.Spec.Subresources.Scale != nil {
 			apiResourcesForDiscovery = append(apiResourcesForDiscovery, metav1.APIResource{
 				Group:      autoscaling.GroupName,
 				Version:    "v1",
@@ -198,9 +194,9 @@ func sortGroupDiscoveryByKubeAwareVersion(gd []metav1.GroupVersionForDiscovery) 
 func (c *DiscoveryController) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	defer c.queue.ShutDown()
-	defer klog.Infof("Shutting down DiscoveryController")
+	defer glog.Infof("Shutting down DiscoveryController")
 
-	klog.Infof("Starting DiscoveryController")
+	glog.Infof("Starting DiscoveryController")
 
 	if !cache.WaitForCacheSync(stopCh, c.crdsSynced) {
 		utilruntime.HandleError(fmt.Errorf("timed out waiting for caches to sync"))
@@ -246,14 +242,14 @@ func (c *DiscoveryController) enqueue(obj *apiextensions.CustomResourceDefinitio
 
 func (c *DiscoveryController) addCustomResourceDefinition(obj interface{}) {
 	castObj := obj.(*apiextensions.CustomResourceDefinition)
-	klog.V(4).Infof("Adding customresourcedefinition %s", castObj.Name)
+	glog.V(4).Infof("Adding customresourcedefinition %s", castObj.Name)
 	c.enqueue(castObj)
 }
 
 func (c *DiscoveryController) updateCustomResourceDefinition(oldObj, newObj interface{}) {
 	castNewObj := newObj.(*apiextensions.CustomResourceDefinition)
 	castOldObj := oldObj.(*apiextensions.CustomResourceDefinition)
-	klog.V(4).Infof("Updating customresourcedefinition %s", castOldObj.Name)
+	glog.V(4).Infof("Updating customresourcedefinition %s", castOldObj.Name)
 	// Enqueue both old and new object to make sure we remove and add appropriate Versions.
 	// The working queue will resolve any duplicates and only changes will stay in the queue.
 	c.enqueue(castNewObj)
@@ -265,15 +261,15 @@ func (c *DiscoveryController) deleteCustomResourceDefinition(obj interface{}) {
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			klog.Errorf("Couldn't get object from tombstone %#v", obj)
+			glog.Errorf("Couldn't get object from tombstone %#v", obj)
 			return
 		}
 		castObj, ok = tombstone.Obj.(*apiextensions.CustomResourceDefinition)
 		if !ok {
-			klog.Errorf("Tombstone contained object that is not expected %#v", obj)
+			glog.Errorf("Tombstone contained object that is not expected %#v", obj)
 			return
 		}
 	}
-	klog.V(4).Infof("Deleting customresourcedefinition %q", castObj.Name)
+	glog.V(4).Infof("Deleting customresourcedefinition %q", castObj.Name)
 	c.enqueue(castObj)
 }
