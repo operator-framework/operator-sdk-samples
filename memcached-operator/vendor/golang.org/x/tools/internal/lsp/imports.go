@@ -6,31 +6,33 @@ package lsp
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/tools/internal/lsp/protocol"
 	"golang.org/x/tools/internal/lsp/source"
+	"golang.org/x/tools/internal/span"
 )
 
-func organizeImports(ctx context.Context, v source.View, uri protocol.DocumentURI) ([]protocol.TextEdit, error) {
-	f, err := v.GetFile(ctx, fromProtocolURI(uri))
+func organizeImports(ctx context.Context, v source.View, s span.Span) ([]protocol.TextEdit, error) {
+	f, m, err := newColumnMap(ctx, v, s.URI())
 	if err != nil {
 		return nil, err
 	}
-	tok, err := f.GetToken()
+	rng, err := s.Range(m.Converter)
 	if err != nil {
 		return nil, err
 	}
-	r := source.Range{
-		Start: tok.Pos(0),
-		End:   tok.Pos(tok.Size()),
+	if rng.Start == rng.End {
+		// If we have a single point, assume we want the whole file.
+		tok := f.GetToken(ctx)
+		if tok == nil {
+			return nil, fmt.Errorf("no file information for %s", f.URI())
+		}
+		rng.End = tok.Pos(tok.Size())
 	}
-	content, err := f.Read()
+	edits, err := source.Imports(ctx, f, rng)
 	if err != nil {
 		return nil, err
 	}
-	edits, err := source.Imports(ctx, tok.Name(), content, r)
-	if err != nil {
-		return nil, err
-	}
-	return toProtocolEdits(tok, content, edits), nil
+	return toProtocolEdits(m, edits)
 }

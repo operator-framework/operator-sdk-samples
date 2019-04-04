@@ -47,6 +47,7 @@ func (d *DockerfileHybrid) GetInput() (input.Input, error) {
 const dockerFileHybridAnsibleTmpl = `FROM ansible/ansible-runner
 
 RUN yum remove -y ansible python-idna
+RUN yum install -y inotify-tools && yum clean all
 RUN pip uninstall ansible-runner -y
 
 RUN pip install --upgrade setuptools
@@ -65,6 +66,8 @@ ENV OPERATOR=/usr/local/bin/ansible-operator \
 
 # install operator binary
 COPY build/_output/bin/{{.ProjectName}} ${OPERATOR}
+# install k8s_status Ansible Module
+COPY library/k8s_status.py /usr/share/ansible/openshift/
 
 COPY bin /usr/local/bin
 RUN  /usr/local/bin/user_setup

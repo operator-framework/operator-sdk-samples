@@ -70,7 +70,7 @@ func defaultOperationsCallOptions() *OperationsCallOptions {
 	}
 }
 
-// OperationsClient is a client for interacting with Google Long Running Operations API.
+// OperationsClient is a client for interacting with Long Running Operations API.
 //
 // Methods, except Close, may be called concurrently. However, fields must not be modified concurrently with method calls.
 type OperationsClient struct {
@@ -154,8 +154,13 @@ func (c *OperationsClient) GetOperation(ctx context.Context, req *longrunningpb.
 // ListOperations lists operations that match the specified filter in the request. If the
 // server doesn't support this method, it returns UNIMPLEMENTED.
 //
-// NOTE: the name binding below allows API services to override the binding
-// to use different resource name schemes, such as users/*/operations.
+// NOTE: the name binding allows API services to override the binding
+// to use different resource name schemes, such as users/*/operations. To
+// override the binding, API services can add a binding such as
+// "/v1/{name=users/*}/operations" to their service configuration.
+// For backwards compatibility, the default name includes the operations
+// collection id, however overriding users must ensure the name binding
+// is the parent resource, without the operations collection id.
 func (c *OperationsClient) ListOperations(ctx context.Context, req *longrunningpb.ListOperationsRequest, opts ...gax.CallOption) *OperationIterator {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListOperations[0:len(c.CallOptions.ListOperations):len(c.CallOptions.ListOperations)], opts...)
