@@ -25,13 +25,10 @@ type ParameterInformation struct {
 }
 
 func SignatureHelp(ctx context.Context, f File, pos token.Pos) (*SignatureInformation, error) {
-	fAST, err := f.GetAST()
-	if err != nil {
-		return nil, err
-	}
-	pkg, err := f.GetPackage()
-	if err != nil {
-		return nil, err
+	fAST := f.GetAST(ctx)
+	pkg := f.GetPackage(ctx)
+	if pkg.IsIllTyped() {
+		return nil, fmt.Errorf("package for %s is ill typed", f.URI())
 	}
 
 	// Find a call expression surrounding the query position.
@@ -54,9 +51,9 @@ func SignatureHelp(ctx context.Context, f File, pos token.Pos) (*SignatureInform
 	var obj types.Object
 	switch t := callExpr.Fun.(type) {
 	case *ast.Ident:
-		obj = pkg.TypesInfo.ObjectOf(t)
+		obj = pkg.GetTypesInfo().ObjectOf(t)
 	case *ast.SelectorExpr:
-		obj = pkg.TypesInfo.ObjectOf(t.Sel)
+		obj = pkg.GetTypesInfo().ObjectOf(t.Sel)
 	default:
 		return nil, fmt.Errorf("the enclosing function is malformed")
 	}
@@ -76,7 +73,7 @@ func SignatureHelp(ctx context.Context, f File, pos token.Pos) (*SignatureInform
 	if sig == nil {
 		return nil, fmt.Errorf("no function signatures found for %s", obj.Name())
 	}
-	pkgStringer := qualifier(fAST, pkg.Types, pkg.TypesInfo)
+	pkgStringer := qualifier(fAST, pkg.GetTypes(), pkg.GetTypesInfo())
 	var paramInfo []ParameterInformation
 	for i := 0; i < sig.Params().Len(); i++ {
 		param := sig.Params().At(i)

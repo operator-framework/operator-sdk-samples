@@ -47,13 +47,10 @@ type finder func(types.Object, float64, []CompletionItem) []CompletionItem
 // completion. For instance, some clients may tolerate imperfect matches as
 // valid completion results, since users may make typos.
 func Completion(ctx context.Context, f File, pos token.Pos) (items []CompletionItem, prefix string, err error) {
-	file, err := f.GetAST()
-	if err != nil {
-		return nil, "", err
-	}
-	pkg, err := f.GetPackage()
-	if err != nil {
-		return nil, "", err
+	file := f.GetAST(ctx)
+	pkg := f.GetPackage(ctx)
+	if pkg.IsIllTyped() {
+		return nil, "", fmt.Errorf("package for %s is ill typed", f.URI())
 	}
 	path, _ := astutil.PathEnclosingInterval(file, pos, pos)
 	if path == nil {
@@ -72,10 +69,14 @@ func Completion(ctx context.Context, f File, pos token.Pos) (items []CompletionI
 		}
 	}
 
-	// Skip completion inside comment blocks.
-	switch path[0].(type) {
+	// Skip completion inside comment blocks or string literals.
+	switch lit := path[0].(type) {
 	case *ast.File, *ast.BlockStmt:
 		if inComment(pos, file.Comments) {
+			return items, prefix, nil
+		}
+	case *ast.BasicLit:
+		if lit.Kind == token.STRING {
 			return items, prefix, nil
 		}
 	}
@@ -83,22 +84,26 @@ func Completion(ctx context.Context, f File, pos token.Pos) (items []CompletionI
 	// Save certain facts about the query position, including the expected type
 	// of the completion result, the signature of the function enclosing the
 	// position.
-	typ := expectedType(path, pos, pkg.TypesInfo)
-	sig := enclosingFunction(path, pos, pkg.TypesInfo)
-	pkgStringer := qualifier(file, pkg.Types, pkg.TypesInfo)
+	typ := expectedType(path, pos, pkg.GetTypesInfo())
+	sig := enclosingFunction(path, pos, pkg.GetTypesInfo())
+	pkgStringer := qualifier(file, pkg.GetTypes(), pkg.GetTypesInfo())
+	preferTypeNames := wantTypeNames(pos, path)
 
 	seen := make(map[types.Object]bool)
-
 	// found adds a candidate completion.
 	// Only the first candidate of a given name is considered.
 	found := func(obj types.Object, weight float64, items []CompletionItem) []CompletionItem {
-		if obj.Pkg() != nil && obj.Pkg() != pkg.Types && !obj.Exported() {
+		if obj.Pkg() != nil && obj.Pkg() != pkg.GetTypes() && !obj.Exported() {
 			return items // inaccessible
 		}
+
 		if !seen[obj] {
 			seen[obj] = true
 			if typ != nil && matchingTypes(typ, obj.Type()) {
 				weight *= 10.0
+			}
+			if _, ok := obj.(*types.TypeName); !ok && preferTypeNames {
+				weight *= 0.01
 			}
 			item := formatCompletion(obj, pkgStringer, weight, func(v *types.Var) bool {
 				return isParameter(sig, v)
@@ -109,7 +114,7 @@ func Completion(ctx context.Context, f File, pos token.Pos) (items []CompletionI
 	}
 
 	// The position is within a composite literal.
-	if items, prefix, ok := complit(path, pos, pkg.Types, pkg.TypesInfo, found); ok {
+	if items, prefix, ok := complit(path, pos, pkg.GetTypes(), pkg.GetTypesInfo(), found); ok {
 		return items, prefix, nil
 	}
 	switch n := path[0].(type) {
@@ -119,39 +124,39 @@ func Completion(ctx context.Context, f File, pos token.Pos) (items []CompletionI
 
 		// Is this the Sel part of a selector?
 		if sel, ok := path[1].(*ast.SelectorExpr); ok && sel.Sel == n {
-			items, err = selector(sel, pos, pkg.TypesInfo, found)
+			items, err = selector(sel, pos, pkg.GetTypesInfo(), found)
 			return items, prefix, err
 		}
 		// reject defining identifiers
-		if obj, ok := pkg.TypesInfo.Defs[n]; ok {
+		if obj, ok := pkg.GetTypesInfo().Defs[n]; ok {
 			if v, ok := obj.(*types.Var); ok && v.IsField() {
 				// An anonymous field is also a reference to a type.
 			} else {
 				of := ""
 				if obj != nil {
-					qual := types.RelativeTo(pkg.Types)
+					qual := types.RelativeTo(pkg.GetTypes())
 					of += ", of " + types.ObjectString(obj, qual)
 				}
 				return nil, "", fmt.Errorf("this is a definition%s", of)
 			}
 		}
 
-		items = append(items, lexical(path, pos, pkg.Types, pkg.TypesInfo, found)...)
+		items = append(items, lexical(path, pos, pkg.GetTypes(), pkg.GetTypesInfo(), found)...)
 
 	// The function name hasn't been typed yet, but the parens are there:
 	//   recv.‸(arg)
 	case *ast.TypeAssertExpr:
 		// Create a fake selector expression.
-		items, err = selector(&ast.SelectorExpr{X: n.X}, pos, pkg.TypesInfo, found)
+		items, err = selector(&ast.SelectorExpr{X: n.X}, pos, pkg.GetTypesInfo(), found)
 		return items, prefix, err
 
 	case *ast.SelectorExpr:
-		items, err = selector(n, pos, pkg.TypesInfo, found)
+		items, err = selector(n, pos, pkg.GetTypesInfo(), found)
 		return items, prefix, err
 
 	default:
 		// fallback to lexical completions
-		return lexical(path, pos, pkg.Types, pkg.TypesInfo, found), "", nil
+		return lexical(path, pos, pkg.GetTypes(), pkg.GetTypesInfo(), found), "", nil
 	}
 	return items, prefix, nil
 }
@@ -200,6 +205,34 @@ func selector(sel *ast.SelectorExpr, pos token.Pos, info *types.Info, found find
 	}
 
 	return items, nil
+}
+
+// wantTypeNames checks if given token position is inside func receiver, type params
+// or type results (e.g func (<>) foo(<>) (<>) {} ).
+func wantTypeNames(pos token.Pos, path []ast.Node) bool {
+	for _, p := range path {
+		switch n := p.(type) {
+		case *ast.FuncDecl:
+			recv := n.Recv
+			if recv != nil && recv.Pos() <= pos && pos <= recv.End() {
+				return true
+			}
+
+			if n.Type != nil {
+				params := n.Type.Params
+				if params != nil && params.Pos() <= pos && pos <= params.End() {
+					return true
+				}
+
+				results := n.Type.Results
+				if results != nil && results.Pos() <= pos && pos <= results.End() {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
 }
 
 // lexical finds completions in the lexical environment.

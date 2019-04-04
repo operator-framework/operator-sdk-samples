@@ -56,9 +56,6 @@ spec:
         - name: {{.ProjectName}}
           # Replace this with the built image name
           image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -69,6 +66,10 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
               {{- end}}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "{{.ProjectName}}"
 `
