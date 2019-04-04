@@ -10,6 +10,36 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
-  version: v1alpha1
   subresources:
     status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            size:
+              format: int32
+              type: integer
+          required:
+          - size
+          type: object
+        status:
+          properties:
+            nodes:
+              items:
+                type: string
+              type: array
+          required:
+          - nodes
+          type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
