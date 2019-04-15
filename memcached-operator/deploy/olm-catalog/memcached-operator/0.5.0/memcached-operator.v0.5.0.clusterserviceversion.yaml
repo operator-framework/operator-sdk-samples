@@ -5,7 +5,7 @@ metadata:
     alm-examples: '[{"apiVersion":"cache.example.com/v1alpha1","kind":"Memcached","metadata":{"name":"example-memcached"},"spec":{"size":3}}]'
     capabilities: Basic Install
   name: memcached-operator.v0.5.0
-  namespace: placeholder
+  namespace: default
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
