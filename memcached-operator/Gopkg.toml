@@ -54,7 +54,7 @@ required = [
 
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
-  version = "=v0.1.10"
+  version = "=v0.2.0-alpha.0"
 
 [[constraint]]
   name = "github.com/operator-framework/operator-sdk"

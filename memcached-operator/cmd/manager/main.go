@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -110,6 +111,21 @@ func main() {
 	if err != nil {
 		log.Info(err.Error())
 	}
+
+	// Setup webhooks
+	log.Info("setting up webhook server")
+	hookServer := &webhook.Server{
+		Port:    9876,
+		CertDir: "/tmp/cert",
+	}
+	if err := mgr.Add(hookServer); err != nil {
+		log.Error(err, "unable register webhook server with manager")
+		os.Exit(1)
+	}
+
+	log.Info("registering webhooks to the webhook server")
+	hookServer.Register("/mutate-pods", &webhook.Admission{Handler: &podAnnotator{}})
+	hookServer.Register("/validate-pods", &webhook.Admission{Handler: &podValidator{}})
 
 	log.Info("Starting the Cmd.")
 
