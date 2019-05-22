@@ -30,10 +30,6 @@ const (
 func prepareVaultConfig(vr *api.VaultService) error {
 	var cfgData string
 	cm := &v1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: vr.Namespace,
 		},

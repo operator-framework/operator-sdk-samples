@@ -19,10 +19,6 @@ const (
 // deployEtcdCluster creates an etcd cluster for the given vault's name via etcd operator.
 func deployEtcdCluster(v *api.VaultService) (*eopapi.EtcdCluster, error) {
 	ec := &eopapi.EtcdCluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       eopapi.EtcdClusterResourceKind,
-			APIVersion: eopapi.SchemeGroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EtcdNameForVault(v.Name),
 			Namespace: v.Namespace,

@@ -31,10 +31,6 @@ func prepareDefaultVaultTLSSecrets(vr *api.VaultService) (err error) {
 	// if TLS spec doesn't exist or secrets doesn't exist, then we can go create secrets.
 	if api.IsTLSConfigured(vr.Spec.TLS) {
 		se := &v1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      vr.Spec.TLS.Static.ServerSecret,
 				Namespace: vr.Namespace,
@@ -92,10 +88,6 @@ func newVaultServerTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt 
 // The client key and certificate are not generated since clients are not authenticated at the server
 func newVaultClientTLSSecret(vr *api.VaultService, caCrt *x509.Certificate) *v1.Secret {
 	return &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      api.DefaultVaultClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
@@ -117,10 +109,6 @@ func prepareEtcdTLSSecrets(vr *api.VaultService) (err error) {
 	}()
 
 	se := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      EtcdClientTLSSecretName(vr.Name),
 			Namespace: vr.Namespace,
@@ -228,10 +216,6 @@ func newTLSSecret(vr *api.VaultService, caKey *rsa.PrivateKey, caCrt *x509.Certi
 		return nil, fmt.Errorf("new TLS secret failed: %v", err)
 	}
 	secret := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: vr.Namespace,

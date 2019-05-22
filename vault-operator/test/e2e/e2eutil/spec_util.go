@@ -9,10 +9,6 @@ import (
 // NewCluster returns a minimal vault cluster CR
 func NewCluster(genName, namespace string, size int) *api.VaultService {
 	return &api.VaultService{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       api.VaultServiceKind,
-			APIVersion: api.SchemeGroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: genName,
 			Namespace:    namespace,

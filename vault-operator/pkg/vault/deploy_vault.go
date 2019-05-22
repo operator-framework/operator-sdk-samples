@@ -72,10 +72,6 @@ func deployVault(v *api.VaultService) error {
 	configVaultServerTLS(&podTempl, v)
 
 	d := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.GetName(),
 			Namespace: v.GetNamespace(),
@@ -101,10 +97,6 @@ func deployVault(v *api.VaultService) error {
 	}
 
 	svc := &v1.Service{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Service",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      v.GetName(),
 			Namespace: v.GetNamespace(),
