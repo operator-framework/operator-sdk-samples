@@ -17,10 +17,6 @@ import (
 // syncVaultClusterSize ensures that the vault cluster is at the desired size.
 func syncVaultClusterSize(vr *api.VaultService) error {
 	d := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      vr.GetName(),
 			Namespace: vr.GetNamespace(),
@@ -49,10 +45,6 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 	}()
 
 	d := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      vr.GetName(),
 			Namespace: vr.GetNamespace(),
@@ -104,10 +96,6 @@ func syncUpgrade(vr *api.VaultService, status *api.VaultServiceStatus) (err erro
 		// If it failed for some reason, kubelet will send SIGKILL after default grace period (30s) eventually.
 		// It take longer but the the lock will get released eventually on failure case.
 		p := &v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Pod",
-				APIVersion: "v1",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      active,
 				Namespace: vr.GetNamespace(),

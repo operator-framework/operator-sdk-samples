@@ -19,12 +19,7 @@ func TestScaleUp(t *testing.T) {
 		t.Fatalf("could not initialize cluster resources: %v", err)
 	}
 
-	vaultServiceList := &api.VaultServiceList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "VaultService",
-			APIVersion: "vault.security.coreos.com/v1alpha1",
-		},
-	}
+	vaultServiceList := &api.VaultServiceList{}
 	err = framework.AddToFrameworkScheme(api.AddToScheme, vaultServiceList)
 	if err != nil {
 		t.Fatalf("could not add scheme to framework scheme: %v", err)

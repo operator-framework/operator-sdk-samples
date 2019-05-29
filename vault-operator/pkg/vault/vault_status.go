@@ -28,12 +28,7 @@ func updateVaultStatus(vr *api.VaultService, status *api.VaultServiceStatus) err
 // getVaultStatus retrieves the status of the vault cluster for the given Custom Resource "vr",
 // and it only succeeds if all of the nodes from vault cluster are reachable.
 func getVaultStatus(vr *api.VaultService) (*api.VaultServiceStatus, error) {
-	pods := &v1.PodList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
-	}
+	pods := &v1.PodList{}
 	sel := LabelsForVault(vr.Name)
 	opt := &metav1.ListOptions{LabelSelector: labels.SelectorFromSet(sel).String()}
 	err := sdk.List(vr.GetNamespace(), pods, sdk.WithListOptions(opt))
@@ -114,10 +109,6 @@ func NewVaultClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig)
 func vaultTLSFromSecret(vr *api.VaultService) (*vaultapi.TLSConfig, error) {
 	cs := vr.Spec.TLS.Static.ClientSecret
 	se := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cs,
 			Namespace: vr.GetNamespace(),
