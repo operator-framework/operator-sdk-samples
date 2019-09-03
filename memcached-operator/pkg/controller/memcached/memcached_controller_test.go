@@ -72,7 +72,7 @@ func TestMemcachedController(t *testing.T) {
 		t.Error("reconcile did not requeue request as expected")
 	}
 
-	// Check if deployment has been created and has the correct size.
+	// Check if Deployment has been created and has the correct size.
 	dep := &appsv1.Deployment{}
 	err = cl.Get(context.TODO(), req.NamespacedName, dep)
 	if err != nil {
@@ -81,6 +81,22 @@ func TestMemcachedController(t *testing.T) {
 	dsize := *dep.Spec.Replicas
 	if dsize != replicas {
 		t.Errorf("dep size (%d) is not the expected size (%d)", dsize, replicas)
+	}
+
+	res, err = r.Reconcile(req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+	// Check the result of reconciliation to make sure it has the desired state.
+	if res.Requeue {
+		t.Error("reconcile requeue which is not expected")
+	}
+
+	// Check if Service has been created.
+	ser := &corev1.Service{}
+	err = cl.Get(context.TODO(), req.NamespacedName, ser)
+	if err != nil {
+		t.Fatalf("get service: (%v)", err)
 	}
 
 	// Create the 3 expected pods in namespace and collect their names to check
