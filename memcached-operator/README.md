@@ -4,29 +4,18 @@
 
 This Memcached operator is a simple example operator for the [Operator SDK][operator_sdk] and includes some basic end-to-end tests.
 
-## Quick Start
-
-This quick start guide walks through the process of building the memcached-operator and running its end-to-end tests.
-
-### Prerequisites
+## Prerequisites
 
 - [dep][dep_tool] version v0.5.0+.
-- [go][go_tool] version v1.10+
+- [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+
-- Access to a kubernetes v1.9.0+ cluster
+- [kubectl][kubectl_tool] v1.11.3+
+- [operator-sdk][operator_install]
+- Access to a Kubernetes v1.11.3+ cluster
 
-### Install the Operator SDK CLI
+## Getting Started
 
-First, checkout and install the operator-sdk CLI:
-
-```
-$ cd $GOPATH/src/github.com/operator-framework/operator-sdk
-$ git checkout master // currently, there are no releases that include the test framework, so use the master for now
-$ dep ensure
-$ make install github.com/operator-framework/operator-sdk/commands/operator-sdk
-```
-
-### Initial Setup
+### Cloning the repository
 
 Checkout this Memcached Operator repository
 
@@ -36,14 +25,15 @@ $ cd $GOPATH/src/github.com/operator-framework
 $ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/memcached-operator
 ```
+### Pulling the dependencies
 
-Vendor the dependencies
+Run the following command
 
 ```
-$ dep ensure
+$ go mod tidy
 ```
 
-### Build the operator
+### Building the operator
 
 Build the Memcached operator image and push it to a public registry, such as quay.io:
 
@@ -53,50 +43,30 @@ $ operator-sdk build $IMAGE
 $ docker push $IMAGE
 ```
 
-### Run the tests
-
-To run the tests in `test/e2e`, first make sure to update the image name from `REPLACE_IMAGE`
-to your desired image name in `deploy/operator.yaml`:
+### Using the image
 
 ```
-$ sed "s@REPLACE_IMAGE@$IMAGE@g" -i deploy/operator.yaml
+# Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
+$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
+# On OSX use:
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
 ```
 
-Run the tests that reside in `test/e2e`:
+**NOTE** The `quay.io/example-inc/memcached-operator` is an example. You should build and push the image for your repository. 
 
-```
-$ operator-sdk test local ./test/e2e
-```
+### Installing
 
-To run go-test with verbose and limit to 2 parallel tests:
+Run `make install` and check the operator and the example Memcached deployed and running in the cluster 
 
-```
-$ operator-sdk test local ./test/e2e --go-test-flags "-v -parallel=2"
-```
+### Uninstalling 
 
-To run the tests from an image in the cluster, first build the tests into your image:
+To uninstall all that was performed in the above step run `make uninstall`.
 
-```
-$ operator-sdk build $IMAGE --enable-tests
-$ docker push $IMAGE
-```
-
-Then, configure the testing environment:
-
-```
-$ export NAMESPACE="my-test"
-$ kubectl create -f deploy/crds/cache_v1alpha1_memcached_crd.yaml -n $NAMESPACE
-$ kubectl create -f deploy/service_account.yaml -n $NAMESPACE
-$ kubectl create -f deploy/role.yaml -n $NAMESPACE
-$ kubectl create -f deploy/role_binding.yaml -n $NAMESPACE
-```
-
-Finally, run the tests:
-```
-$ operator-sdk test cluster $IMAGE --namespace $NAMESPACE --service-account memcached-operator
-```
+**NOTE:** To check what is done in the Make commands see the [Makefile](./Makefile)
 
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [go_tool]:https://golang.org/dl/
+[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]:https://docs.docker.com/install/
 [operator_sdk]:https://github.com/operator-framework/operator-sdk
+[operator_install]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
