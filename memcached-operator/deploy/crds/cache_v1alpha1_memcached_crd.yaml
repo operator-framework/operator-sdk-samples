@@ -30,6 +30,7 @@ spec:
         spec:
           properties:
             size:
+              description: Quantity of instances
               format: int32
               type: integer
           required:
@@ -38,6 +39,7 @@ spec:
         status:
           properties:
             nodes:
+              description: Status of Nodes
               items:
                 type: string
               type: array

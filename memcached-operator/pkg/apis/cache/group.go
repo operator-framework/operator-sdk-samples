@@ -1,0 +1,6 @@
+// Package cache contains cache API versions.
+//
+// This file ensures Go source parsers acknowledge the cache package
+// and any child packages. It can be removed if any other Go source files are
+// added to this package.
+package cache
