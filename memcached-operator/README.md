@@ -56,13 +56,11 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/op
 
 ### Installing
 
-Run `make install` and check the operator and the example Memcached deployed and running in the cluster 
+Run make install to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
 
 ### Uninstalling 
 
 To uninstall all that was performed in the above step run `make uninstall`.
-
-**NOTE:** To check what is done in the Make commands see the [Makefile](./Makefile)
 
 [dep_tool]:https://golang.github.io/dep/docs/installation.html
 [go_tool]:https://golang.org/dl/
