@@ -56,7 +56,7 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/op
 
 ### Installing
 
-Run make install to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
+Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
 
 ### Uninstalling 
 
@@ -68,3 +68,7 @@ To uninstall all that was performed in the above step run `make uninstall`.
 [docker_tool]:https://docs.docker.com/install/
 [operator_sdk]:https://github.com/operator-framework/operator-sdk
 [operator_install]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
+
+### Run Tests
+
+Run `make test-e2e` to run integration tests. This command will execute many times the same e2e tests. Its purposes is just to illustrate few options.
