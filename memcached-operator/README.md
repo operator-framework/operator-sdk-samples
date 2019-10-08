@@ -52,23 +52,25 @@ $ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/opera
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
 ```
 
-**NOTE** The `quay.io/example-inc/memcached-operator` is an example. You should build and push the image for your repository. 
+**NOTE** The `quay.io/example-inc/memcached-operator` is an example. You should build and push the image for your repository.
 
 ### Installing
 
 Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
 
-### Uninstalling 
+### Uninstalling
 
 To uninstall all that was performed in the above step run `make uninstall`.
 
-[dep_tool]:https://golang.github.io/dep/docs/installation.html
-[go_tool]:https://golang.org/dl/
-[kubectl_tool]:https://kubernetes.io/docs/tasks/tools/install-kubectl/
-[docker_tool]:https://docs.docker.com/install/
-[operator_sdk]:https://github.com/operator-framework/operator-sdk
-[operator_install]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
+[dep_tool](https://golang.github.io/dep/docs/installation.html)
+[go_tool](https://golang.org/dl/)
+[kubectl_tool](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+[docker_tool](https://docs.docker.com/install/)
+[operator_sdk](https://github.com/operator-framework/operator-sdk)
+[operator_install](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md)
 
 ### Run Tests
 
-Run `make test-e2e` to run integration tests. This command will execute many times the same e2e tests. Its purposes is just to illustrate few options.
+Run `make test-e2e` to run the integration e2e tests with different options. For
+more information see the [writing e2e tests](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md) guide.
+

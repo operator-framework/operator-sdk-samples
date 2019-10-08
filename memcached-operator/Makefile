@@ -55,8 +55,8 @@ code-gen: ## Run the operator-sdk commands to generated code (k8s and openapi)
 
 ##@ Tests
 
-test-e2e: ## Run integration tests. This command will execute many times the same e2e tests. Its purposes is just to illustrate few options. For further info see: https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md
-	@echo ... Running the same e2e tests with some few options of args ...
+test-e2e: ## Run integration e2e tests with different options.
+	@echo ... Running the same e2e tests with different args ...
 	@echo ... Running locally ...
 	- operator-sdk test local ./test/e2e --up-local --namespace=${NAMESPACE}
 	@echo ... Running NOT in parallel ...
@@ -71,5 +71,8 @@ test-e2e: ## Run integration tests. This command will execute many times the sam
 	- operator-sdk test local ./test/e2e --verbose
 
 .PHONY: help
-help:  ## Display this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+help: ## Display this help
+	@echo -e "Usage:\n  make \033[36m<target>\033[0m"
+	@awk 'BEGIN {FS = ":.*##"}; \
+		/^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } \
+		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
