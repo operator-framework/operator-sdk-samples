@@ -1,5 +1,0 @@
----
-- version: v1alpha1
-  group: bitcoin-sv.example.com
-  kind: Bitd
-  role: /opt/ansible/roles/Bitd/

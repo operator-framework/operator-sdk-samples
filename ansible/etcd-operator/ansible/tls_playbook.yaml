@@ -1,5 +1,0 @@
-- hosts: localhost
-  tasks:
-  - debug: msg="Running Playbook for creating tls certificates"
-  - import_role:
-      name: "tls_certs"
