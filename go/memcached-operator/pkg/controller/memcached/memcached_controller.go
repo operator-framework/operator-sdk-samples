@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -108,55 +108,56 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 
-	// Check if the Deployment already exists, if not create a new one
-	deployment := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, deployment)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new Deployment
-		dep := r.deploymentForMemcached(memcached)
-		reqLogger.Info("Creating a new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.client.Create(context.TODO(), dep)
-		if err != nil {
-			reqLogger.Error(err, "Failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return reconcile.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		// NOTE: that the requeue is made with the purpose to provide the deployment object for the next step to ensure the deployment size is the same as the spec.
-		// Also, you could GET the deployment object again instead of requeue if you wish. See more over it here: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment.")
-		return reconcile.Result{}, err
-	}
+	// Update the Deployment if it already exists and was changed, if not create a new one
+	// More info: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/controller/controllerutil#CreateOrUpdate
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: memcached.Name, Namespace: memcached.Namespace}}
+	op, err := controllerutil.CreateOrUpdate(context.TODO(), r.client, deployment, func() error {
 
-	// Ensure the deployment size is the same as the spec
-	size := memcached.Spec.Size
-	if *deployment.Spec.Replicas != size {
-		deployment.Spec.Replicas = &size
-		err = r.client.Update(context.TODO(), deployment)
-		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment.", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
-			return reconcile.Result{}, err
-		}
-	}
+		// Set deployment object to expected state in memory. If it's different than what
+		// the calling `CreateOrUpdate` function gets from Kubernetes, it will send an
+		// update request back to the apiserver with the expected state determined here.
+		deploymentForMemcached(memcached, deployment)
 
-	// Check if the Service already exists, if not create a new one
-	// NOTE: The Service is used to expose the Deployment. However, the Service is not required at all for the memcached example to work. The purpose is to add more examples of what you can do in your operator project.
-	service := &corev1.Service{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, service)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new Service object
-		ser := r.serviceForMemcached(memcached)
-		reqLogger.Info("Creating a new Service.", "Service.Namespace", ser.Namespace, "Service.Name", ser.Name)
-		err = r.client.Create(context.TODO(), ser)
+		// Set Memcached instance as the owner of the Deployment.
+		err := controllerutil.SetControllerReference(memcached, deployment, r.scheme)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Service.", "Service.Namespace", ser.Namespace, "Service.Name", ser.Name)
-			return reconcile.Result{}, err
+			reqLogger.Error(err, "Failed to set owner reference on memcached Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
+			return err
 		}
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Service.")
-		return reconcile.Result{}, err
+		return nil
+
+	})
+	if err != nil {
+		reqLogger.Error(err, "Failed to reconcile Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
 	}
+	reqLogger.Info("Deployment reconciled", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name, "Operation", op)
+
+	// Update Service if it has changed to something other than expected. If the Service doesn't
+	// exist it will be created (initial creation is not really a special case).
+	//
+	// NOTE: The Service is used to expose the Deployment. However, the Service is not required
+	// at all for the memcached example to work. The purpose is to add more examples of what you
+	// can do in your operator project.
+	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: memcached.Name, Namespace: memcached.Namespace}}
+	op, err = controllerutil.CreateOrUpdate(context.TODO(), r.client, service, func() error {
+
+		// Set service object to expected state in memory. If it's different than what the
+		// calling `CreateOrUpdate` function gets from Kubernetes, it will send an update
+		// request back to the apiserver with the expected state determined here.
+		serviceForMemcached(memcached, service)
+
+		// Set Memcached instance as the owner of the Service.
+		err := controllerutil.SetControllerReference(memcached, service, r.scheme)
+		if err != nil {
+			reqLogger.Error(err, "Failed to set owner reference on memcached Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		reqLogger.Error(err, "Failed to reconcile Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+	}
+	reqLogger.Info("Service reconciled", "Service.Namespace", service.Namespace, "Service.Name", service.Name, "Operation", op)
 
 	// Update the Memcached status with the pod names
 	// List the pods for this memcached's deployment
@@ -185,65 +186,55 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	return reconcile.Result{}, nil
 }
 
-// deploymentForMemcached returns a memcached Deployment object
-func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) *appsv1.Deployment {
-	ls := labelsForMemcached(m.Name)
+// deploymentForMemcached mutates the passed in Deployment reference to the expected state
+func deploymentForMemcached(m *cachev1alpha1.Memcached, deployment *appsv1.Deployment) {
+	name := "memcached"
+	image := "memcached:1.4.36-alpine"
 	replicas := m.Spec.Size
+	ls := labelsForMemcached(m.Name)
+	command := []string{"memcached", "-m=64", "-o", "modern", "-v"}
+	ports := []corev1.ContainerPort{{ContainerPort: 11211, Name: "memcached", Protocol: "TCP"}}
 
-	dep := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image:   "memcached:1.4.36-alpine",
-						Name:    "memcached",
-						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: 11211,
-							Name:          "memcached",
-						}},
-					}},
-				},
-			},
-		},
+	// Ensure all fields in the Deployment have their expected values. If they're not already
+	// set to these values, we reset them here and then when control is given back to the
+	// `controllerutil.CreateOrUpdate` function, it will send that update to the api server.
+	if len(deployment.Spec.Template.Spec.Containers) != 1 {
+		deployment.Spec.Template.Spec.Containers = make([]corev1.Container, 1)
 	}
-	// Set Memcached instance as the owner of the Deployment.
-	controllerutil.SetControllerReference(m, dep, r.scheme)
-	return dep
+
+	deployment.Spec.Replicas = &replicas
+	deployment.Spec.Template.ObjectMeta.Labels = ls
+	deployment.Spec.Template.Spec.Containers[0].Name = name
+	deployment.Spec.Template.Spec.Containers[0].Image = image
+	deployment.Spec.Template.Spec.Containers[0].Ports = ports
+	deployment.Spec.Template.Spec.Containers[0].Command = command
+
+	// Deployment selector is immutable so we only set this value if
+	// a new object is going to be created
+	if deployment.Spec.Selector == nil {
+		deployment.Spec.Selector = &metav1.LabelSelector{MatchLabels: ls}
+	}
+
+	return
 }
 
-// serviceForMemcached function takes in a Memcached object and returns a Service for that object.
-func (r *ReconcileMemcached) serviceForMemcached(m *cachev1alpha1.Memcached) *corev1.Service {
-	ls := labelsForMemcached(m.Name)
-	ser := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: ls,
-			Ports: []corev1.ServicePort{
-				{
-					Port: 11211,
-					Name: m.Name,
-				},
-			},
-		},
+// serviceForMemcached mutates the passed in Service reference to the expected state
+func serviceForMemcached(m *cachev1alpha1.Memcached, service *corev1.Service) {
+
+	// Ensure all fields in the Service have their expected values. If they're not already
+	// set to these values, we reset them here and then when control is given back to the
+	// `controllerutil.CreateOrUpdate` function, it will send that update to the api server.
+	if len(service.Spec.Ports) != 1 {
+		service.Spec.Ports = make([]corev1.ServicePort, 1)
 	}
-	// Set Memcached instance as the owner of the Service.
-	controllerutil.SetControllerReference(m, ser, r.scheme)
-	return ser
+
+	service.Spec.Ports[0].Name = m.Name
+	service.Spec.Ports[0].Port = 11211
+	service.Spec.Ports[0].TargetPort = intstr.FromInt(11211)
+	service.Spec.Ports[0].Protocol = corev1.ProtocolTCP
+	service.Spec.Selector = labelsForMemcached(m.Name)
+
+	return
 }
 
 // labelsForMemcached returns the labels for selecting the resources
