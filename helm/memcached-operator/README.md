@@ -52,24 +52,25 @@ Run `make install` to install the operator. Check that the operator is running i
 Following the expected result. 
 
 ```shell
-$ kubectl get all -n helm-memcached
-NAME                                      READY   STATUS    RESTARTS   AGE
-pod/example-memcached-84dc867dc-b28wc     1/1     Running   0          7s
-pod/example-memcached-84dc867dc-vrxd8     1/1     Running   0          7s
-pod/example-memcached-84dc867dc-vvb29     1/1     Running   0          7s
-pod/memcached-operator-5b45959c8b-sx9x4   1/1     Running   0          13s
+$ kubectl get all -n helm-memcached -o wide
+NAME                                      READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+pod/example-memcached-0                   1/1     Running   0          37s   172.17.0.5   minikube   <none>           <none>
+pod/example-memcached-1                   1/1     Running   0          19s   172.17.0.6   minikube   <none>           <none>
+pod/example-memcached-2                   1/1     Running   0          12s   172.17.0.7   minikube   <none>           <none>
+pod/memcached-operator-55d98c7cf8-x6x9p   1/1     Running   0          52s   172.17.0.4   minikube   <none>           <none>
 
-NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE
-service/example-memcached            ClusterIP   10.107.76.22    <none>        80/TCP              7s
-service/memcached-operator-metrics   ClusterIP   10.99.126.244   <none>        8686/TCP,8383/TCP   7s
+NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE   SELECTOR
+service/example-memcached            ClusterIP   None            <none>        11211/TCP           37s   app=example-memcached
+service/memcached-operator-metrics   ClusterIP   10.96.212.206   <none>        8686/TCP,8383/TCP   38s   name=memcached-operator
 
-NAME                                 READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/example-memcached    3/3     3            3           7s
-deployment.apps/memcached-operator   1/1     1            1           13s
+NAME                                 READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS           IMAGES                            SELECTOR
+deployment.apps/memcached-operator   1/1     1            1           52s   memcached-operator   cmacedo/memcached-operator:test   name=memcached-operator
 
-NAME                                            DESIRED   CURRENT   READY   AGE
-replicaset.apps/example-memcached-84dc867dc     3         3         3       7s
-replicaset.apps/memcached-operator-5b45959c8b   1         1         1       13s
+NAME                                            DESIRED   CURRENT   READY   AGE   CONTAINERS           IMAGES                            SELECTOR
+replicaset.apps/memcached-operator-55d98c7cf8   1         1         1       52s   memcached-operator   cmacedo/memcached-operator:test   name=memcached-operator,pod-template-hash=55d98c7cf8
+
+NAME                                 READY   AGE   CONTAINERS          IMAGES
+statefulset.apps/example-memcached   3/3     37s   example-memcached   memcached:1.5.12-alpine
 ```
 
 ### Uninstalling 

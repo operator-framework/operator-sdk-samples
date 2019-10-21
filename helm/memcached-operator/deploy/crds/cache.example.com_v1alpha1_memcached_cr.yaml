@@ -26,7 +26,7 @@ spec:
   pdbMinAvailable: 2
   
   ## Select AntiAffinity as either hard or soft, default is hard
-  AntiAffinity: "hard"
+  AntiAffinity: "soft"
   
   memcached:
     ## Various values that get set as command-line flags.
