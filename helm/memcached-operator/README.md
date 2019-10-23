@@ -2,20 +2,20 @@
 
 ## Overview
 
-This Memcached operator is a simple example operator based in Helm built with the [Operator SDK][operator_sdk].
+This Memcached operator is a simple example of the Operator SDK Helm-based operator. It is based on the [`stable/memcached` chart][stable/memcached] .
 
 ## Prerequisites
 
 - [docker][docker_tool] version 17.03+
-- [kubectl][kubectl_tool] v1.11.3+
-- [operator_sdk][operator_install]
-- Access to a Kubernetes v1.11.3+ cluster
+- [kubectl][kubectl_tool] v1.12+
+- [operator SDK][operator_install]
+- Access to a Kubernetes v1.14.5+ cluster
 
 ## Getting Started
 
 ### Cloning the repository
 
-Checkout this Memcached Operator repository
+Checkout this Memcached operator repository
 
 ```
 $ mkdir operator-framework
@@ -38,10 +38,15 @@ $ docker push $IMAGE
 
 ### Using the image
 
+Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
+
 ```
-# Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
 $ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
-# On OSX use:
+```
+
+**Note**
+If you are performing these steps on OSX, use the following `sed` command instead:
+```
 $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
 ```
 
@@ -49,7 +54,7 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/op
 
 Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
 
-Following the expected result. 
+Run the following command to verify that the installation was successful:
 
 ```shell
 $ kubectl get all -n helm-memcached -o wide
@@ -75,7 +80,7 @@ statefulset.apps/example-memcached   3/3     37s   example-memcached   memcached
 
 ### Uninstalling 
 
-To uninstall all that was performed in the above step run `make uninstall`.
+Run `make uninstall` to uninstall all that was performed in the above step.
 
 ### Troubleshooting
 
@@ -85,11 +90,11 @@ Run the following command to check the operator logs.
 kubectl logs deployment.apps/memcached-operator -n helm-memcached
 ```
 
-**NOTE** To have further information about how to develop Helm operators with [Operator-SDK][operator_sdk] check the [Helm User Guide for Operator-SDK][helm_guide]
+**NOTE** For further information about how to develop Helm operators with Operator SDK, read the [Helm User Guide for Operator SDK][helm_guide]
 
 ### Extras
 
-Mote that this project was created by using the following command which means that it is using the [stable/memcached][stable/memcached]
+This project was created by using the following command, which means that it is using the official [stable/memcached][stable/memcached] helm chart.
 
 ```shell
 operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=helm --helm-chart=stable/memcached
@@ -97,7 +102,6 @@ operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --k
 
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
-[operator_sdk]: https://github.com/operator-framework/operator-sdk
 [operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
 [helm_guide]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
