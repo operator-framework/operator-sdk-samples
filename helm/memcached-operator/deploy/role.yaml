@@ -7,11 +7,12 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
   - configmaps
   - secrets
   verbs:
@@ -19,16 +20,20 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - namespaces
+  - services
   verbs:
-  - get
+  - '*'
 - apiGroups:
   - apps
   resources:
   - deployments
-  - daemonsets
-  - replicasets
   - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - '*'
 - apiGroups:
@@ -38,6 +43,27 @@ rules:
   verbs:
   - get
   - create
+- apiGroups:
+  - apps
+  resourceNames:
+  - memcached-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - get
 - apiGroups:
   - cache.example.com
   resources:

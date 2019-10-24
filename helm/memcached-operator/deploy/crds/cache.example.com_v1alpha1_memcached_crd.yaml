@@ -10,6 +10,9 @@ spec:
     plural: memcacheds
     singular: memcached
   scope: Namespaced
-  version: v1alpha1
   subresources:
     status: {}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
