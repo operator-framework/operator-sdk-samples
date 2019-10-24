@@ -6,9 +6,8 @@ USER 0
 # yum clean all && rm -rf /var/yum/cache/* first
 RUN yum clean all && rm -rf /var/cache/yum/* \
  && yum -y update \ 
- && yum install -y python36-devel python36-pip gcc libffi-devel
+ && yum install -y python36-devel gcc libffi-devel python36-pip
 RUN pip3 install --user molecule==2.22
-
 ARG NAMESPACEDMAN
 ADD $NAMESPACEDMAN /namespaced.yaml
 ADD build/test-framework/ansible-test.sh /ansible-test.sh
