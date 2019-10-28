@@ -62,15 +62,14 @@ Run `make install` to install the operator. Check that the operator is running i
 
 To uninstall all that was performed in the above step run `make uninstall`.
 
-[dep_tool](https://golang.github.io/dep/docs/installation.html)
-[go_tool](https://golang.org/dl/)
-[kubectl_tool](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-[docker_tool](https://docs.docker.com/install/)
-[operator_sdk](https://github.com/operator-framework/operator-sdk)
-[operator_install](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md)
-
 ### Run Tests
 
 Run `make test-e2e` to run the integration e2e tests with different options. For
 more information see the [writing e2e tests](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md) guide.
 
+[dep_tool]: https://golang.github.io/dep/docs/installation.html
+[go_tool]: https://golang.org/dl/
+[kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+[docker_tool]: https://docs.docker.com/install/
+[operator_sdk]: https://github.com/operator-framework/operator-sdk
+[operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
