@@ -22,6 +22,7 @@ func schema_pkg_apis_cache_v1alpha1_Memcached(ref common.ReferenceCallback) comm
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "Memcached is the Schema for the memcacheds API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -65,10 +66,11 @@ func schema_pkg_apis_cache_v1alpha1_MemcachedSpec(ref common.ReferenceCallback) 
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "MemcachedSpec defines the desired state of Memcached",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"size": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Quantity of instances",
+							Description: "Size is the size of the memcached deployment",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -77,7 +79,6 @@ func schema_pkg_apis_cache_v1alpha1_MemcachedSpec(ref common.ReferenceCallback) 
 				Required: []string{"size"},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
 
@@ -86,10 +87,16 @@ func schema_pkg_apis_cache_v1alpha1_MemcachedStatus(ref common.ReferenceCallback
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "MemcachedStatus defines the observed state of Memcached",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"nodes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Status of Nodes",
+							Description: "Nodes are the names of the memcached pods",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -105,6 +112,5 @@ func schema_pkg_apis_cache_v1alpha1_MemcachedStatus(ref common.ReferenceCallback
 				Required: []string{"nodes"},
 			},
 		},
-		Dependencies: []string{},
 	}
 }
