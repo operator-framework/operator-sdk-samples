@@ -24,7 +24,7 @@
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     pull_policy: Never
     REPLACE_IMAGE: cache.example.com/memcached-operator:testing
-    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/cache_v1alpha1_memcached_cr.yaml'])) | from_yaml }}"
+    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/cache.example.com_v1alpha1_memcached_cr.yaml'])) | from_yaml }}"
   tasks:
   - block:
     - name: Delete the Operator Deployment

@@ -7,9 +7,9 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 ## Prerequisites
 
 - [docker][docker_tool] version 17.03+
-- [kubectl][kubectl_tool] v1.11.3+
+- [kubectl][kubectl_tool] v1.12+
 - [operator_sdk][operator_install]
-- Access to a Kubernetes v1.11.3+ cluster
+- Access to a Kubernetes v1.12+ cluster
 
 ## Getting Started
 
