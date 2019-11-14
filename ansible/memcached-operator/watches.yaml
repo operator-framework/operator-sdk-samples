@@ -2,4 +2,4 @@
 - version: v1alpha1
   group: cache.example.com
   kind: Memcached
-  role: /opt/ansible/roles/memcached
+  role: /opt/ansible/roles/Memcached
