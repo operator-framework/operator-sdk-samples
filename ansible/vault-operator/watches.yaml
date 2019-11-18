@@ -1,5 +1,0 @@
----
-- version: v1alpha1
-  group: vault.security.coreos.com
-  kind: VaultService
-  playbook: /opt/ansible/playbook.yaml

@@ -1,8 +1,0 @@
----
-# defaults file for etcd-ansible-operator
-etcd_namespace: "{{ meta.namespace }}"
-etcd_client_port: 2379
-etcd_peer_port: 2380
-etcd_app_label: "etcd"
-etcd_cluster_name: "example-etcd-cluster"
-etcd_cluster_pods: []
