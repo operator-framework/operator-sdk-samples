@@ -40,7 +40,7 @@ func (in *Memcached) DeepCopyObject() runtime.Object {
 func (in *MemcachedList) DeepCopyInto(out *MemcachedList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Memcached, len(*in))
