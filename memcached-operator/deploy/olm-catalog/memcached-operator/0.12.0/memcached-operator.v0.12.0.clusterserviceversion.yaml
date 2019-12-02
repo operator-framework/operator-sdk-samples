@@ -173,5 +173,4 @@ spec:
   provider:
     name: Example
     url: www.example.com
-  replaces: memcached-operator.v0.11.0
   version: 0.12.0
