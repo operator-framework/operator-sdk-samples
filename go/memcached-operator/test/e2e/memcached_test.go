@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
-	operator "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/operator"
+	operator "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
