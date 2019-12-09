@@ -23,7 +23,7 @@ Checkout this Memcached Operator repository
 $ mkdir $GOPATH/src/github.com/operator-framework
 $ cd $GOPATH/src/github.com/operator-framework
 $ git clone https://github.com/operator-framework/operator-sdk-samples.git
-$ cd operator-sdk-samples/memcached-operator
+$ cd operator-sdk-samples/go/memcached-operator
 ```
 ### Pulling the dependencies
 

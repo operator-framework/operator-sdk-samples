@@ -11,9 +11,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.Memcached":       schema_pkg_apis_cache_v1alpha1_Memcached(ref),
-		"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec":   schema_pkg_apis_cache_v1alpha1_MemcachedSpec(ref),
-		"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus": schema_pkg_apis_cache_v1alpha1_MemcachedStatus(ref),
+		"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.Memcached":       schema_pkg_apis_cache_v1alpha1_Memcached(ref),
+		"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec":   schema_pkg_apis_cache_v1alpha1_MemcachedSpec(ref),
+		"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus": schema_pkg_apis_cache_v1alpha1_MemcachedStatus(ref),
 	}
 }
 
@@ -45,19 +45,19 @@ func schema_pkg_apis_cache_v1alpha1_Memcached(ref common.ReferenceCallback) comm
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec"),
+							Ref: ref("github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus"),
+							Ref: ref("github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec", "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedSpec", "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1.MemcachedStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

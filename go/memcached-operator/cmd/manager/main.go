@@ -11,9 +11,9 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 
-	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
-	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/controller"
-	"github.com/operator-framework/operator-sdk-samples/memcached-operator/version"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/controller"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"

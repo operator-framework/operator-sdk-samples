@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	apis "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
-	operator "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
+	operator "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"

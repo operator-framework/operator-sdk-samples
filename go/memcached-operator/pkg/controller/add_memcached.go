@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/controller/memcached"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/controller/memcached"
 )
 
 func init() {
