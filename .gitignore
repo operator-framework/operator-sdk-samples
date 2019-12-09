@@ -1,5 +1,3 @@
 .idea/*
-helm/memcached-operator/.idea/*
-ansible/memcached-operator/.idea/*
-go/memcached-operator/.idea/*
-helm/.idea/*
+*/.idea/
+*/*/.idea/

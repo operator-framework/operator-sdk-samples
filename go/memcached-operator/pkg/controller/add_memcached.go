@@ -1,10 +1,10 @@
 package controller
 
 import (
-	memcached2 "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/controller/memcached"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/controller/memcached"
 )
 
 func init() {
 	// AddToManagerFuncs is a list of functions to create controllers and add them to a manager.
-	AddToManagerFuncs = append(AddToManagerFuncs, memcached2.Add)
+	AddToManagerFuncs = append(AddToManagerFuncs, memcached.Add)
 }
