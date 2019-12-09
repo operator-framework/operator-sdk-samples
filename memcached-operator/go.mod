@@ -1,4 +1,4 @@
-module github.com/operator-framework/operator-sdk-samples/go/memcached-operator
+module github.com/operator-framework/operator-sdk-samples/memcached-operator
 
 go 1.13
 
