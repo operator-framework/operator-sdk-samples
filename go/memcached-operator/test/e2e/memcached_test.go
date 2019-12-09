@@ -22,7 +22,7 @@ import (
 
 	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
 	operator "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/operator"
-	
+
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
