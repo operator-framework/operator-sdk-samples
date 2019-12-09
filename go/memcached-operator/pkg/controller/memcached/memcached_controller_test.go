@@ -2,12 +2,11 @@ package memcached
 
 import (
 	"context"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 	"math/rand"
 	"reflect"
 	"strconv"
 	"testing"
-
-	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -33,12 +32,12 @@ func TestMemcachedController(t *testing.T) {
 	)
 
 	// A Memcached resource with metadata and spec.
-	memcached := &cachev1alpha1.Memcached{
+	memcached := &v1alpha1.Memcached{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: cachev1alpha1.MemcachedSpec{
+		Spec: v1alpha1.MemcachedSpec{
 			Size: replicas, // Set desired number of Memcached replicas.
 		},
 	}
@@ -49,7 +48,7 @@ func TestMemcachedController(t *testing.T) {
 
 	// Register operator types with the runtime scheme.
 	s := scheme.Scheme
-	s.AddKnownTypes(cachev1alpha1.SchemeGroupVersion, memcached)
+	s.AddKnownTypes(v1alpha1.SchemeGroupVersion, memcached)
 	// Create a fake client to mock API calls.
 	cl := fake.NewFakeClient(objs...)
 	// Create a ReconcileMemcached object with the scheme and fake client.
@@ -128,7 +127,7 @@ func TestMemcachedController(t *testing.T) {
 	}
 
 	// Get the updated Memcached object.
-	memcached = &cachev1alpha1.Memcached{}
+	memcached = &v1alpha1.Memcached{}
 	err = r.client.Get(context.TODO(), req.NamespacedName, memcached)
 	if err != nil {
 		t.Errorf("get memcached: (%v)", err)

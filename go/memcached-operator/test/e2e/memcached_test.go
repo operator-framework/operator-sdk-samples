@@ -17,11 +17,10 @@ package e2e
 import (
 	goctx "context"
 	"fmt"
+	apis2 "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 	"testing"
 	"time"
-
-	apis "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis"
-	operator "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -37,8 +36,8 @@ var (
 )
 
 func TestMemcached(t *testing.T) {
-	memcachedList := &operator.MemcachedList{}
-	err := framework.AddToFrameworkScheme(apis.AddToScheme, memcachedList)
+	memcachedList := &v1alpha1.MemcachedList{}
+	err := framework.AddToFrameworkScheme(apis2.AddToScheme, memcachedList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
@@ -55,12 +54,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 		return fmt.Errorf("could not get namespace: %v", err)
 	}
 	// create memcached custom resource
-	exampleMemcached := &operator.Memcached{
+	exampleMemcached := &v1alpha1.Memcached{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "example-memcached",
 			Namespace: namespace,
 		},
-		Spec: operator.MemcachedSpec{
+		Spec: v1alpha1.MemcachedSpec{
 			Size: 3,
 		},
 	}

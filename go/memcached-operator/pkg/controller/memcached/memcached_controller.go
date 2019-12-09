@@ -2,9 +2,8 @@ package memcached
 
 import (
 	"context"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 	"reflect"
-
-	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/memcached-operator/pkg/apis/cache/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -44,7 +43,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Memcached
-	err = c.Watch(&source.Kind{Type: &cachev1alpha1.Memcached{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1alpha1.Memcached{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -53,7 +52,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to secondary resource Pods and requeue the owner Memcached
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &cachev1alpha1.Memcached{},
+		OwnerType:    &v1alpha1.Memcached{},
 	})
 	if err != nil {
 		return err
@@ -61,7 +60,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &cachev1alpha1.Memcached{},
+		OwnerType:    &v1alpha1.Memcached{},
 	})
 	if err != nil {
 		return err
@@ -93,7 +92,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 	reqLogger.Info("Reconciling Memcached.")
 
 	// Fetch the Memcached instance
-	memcached := &cachev1alpha1.Memcached{}
+	memcached := &v1alpha1.Memcached{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, memcached)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -186,7 +185,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 }
 
 // deploymentForMemcached returns a memcached Deployment object
-func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) *appsv1.Deployment {
+func (r *ReconcileMemcached) deploymentForMemcached(m *v1alpha1.Memcached) *appsv1.Deployment {
 	ls := labelsForMemcached(m.Name)
 	replicas := m.Spec.Size
 
@@ -224,7 +223,7 @@ func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) 
 }
 
 // serviceForMemcached function takes in a Memcached object and returns a Service for that object.
-func (r *ReconcileMemcached) serviceForMemcached(m *cachev1alpha1.Memcached) *corev1.Service {
+func (r *ReconcileMemcached) serviceForMemcached(m *v1alpha1.Memcached) *corev1.Service {
 	ls := labelsForMemcached(m.Name)
 	ser := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
