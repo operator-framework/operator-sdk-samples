@@ -4,16 +4,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/controller"
+	"github.com/operator-framework/operator-sdk-samples/go/memcached-operator/version"
 	"os"
 	"runtime"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
-
-	"github.com/operator-framework/operator-sdk-samples/go/memcached-operatortor/pkg/apis"
-	"github.com/operator-framework/operator-sdk-samples/go/memcached-operatortor/pkg/controller"
-	"github.com/operator-framework/operator-sdk-samples/go/memcached-operatortor/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
