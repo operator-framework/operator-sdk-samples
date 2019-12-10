@@ -2,10 +2,13 @@ package memcached
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
 
 	cachev1alpha1 "github.com/operator-framework/operator-sdk-samples/go/memcached-operator/pkg/apis/cache/v1alpha1"
 
+	ocpconfigv1 "github.com/openshift/api/config/v1"
+	routev1 "github.com/openshift/api/route/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -182,7 +185,41 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		}
 	}
 
+	// Create Route if the project is deployed on OCP
+	if r.isOpenShiftCluster() {
+		reqLogger.Info("Creating route since is deployed on OCP")
+		// Check if the Route already exists, if not create a new one
+		route := &routev1.Route{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, route)
+		if err != nil && errors.IsNotFound(err) {
+			// Define a new Service object
+			route = r.routeForMemcached(memcached)
+			reqLogger.Info("Creating a new Route.", "Route.Namespace", route.Namespace, "Route.Name", route.Name)
+			err = r.client.Create(context.TODO(), route)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new Route.", "Route.Namespace", route.Namespace, "Route.Name", route.Name)
+				return reconcile.Result{}, err
+			}
+		} else if err != nil {
+			reqLogger.Error(err, "Failed to get Route.")
+			return reconcile.Result{}, err
+		}
+	}
+
+	if !r.isOpenShiftCluster() {
+		reqLogger.Info("Route is not created since it is not running in a OpenShift Cluster")
+	}
+
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileMemcached) isOpenShiftCluster() bool {
+	clusterVersion := ocpconfigv1.ClusterVersionList{}
+	err := r.client.List(context.TODO(), &clusterVersion)
+	if err != nil {
+		return false
+	}
+	return len(clusterVersion.Items) > 0
 }
 
 // deploymentForMemcached returns a memcached Deployment object
@@ -194,6 +231,7 @@ func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
+			Labels:    ls,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -230,6 +268,7 @@ func (r *ReconcileMemcached) serviceForMemcached(m *cachev1alpha1.Memcached) *co
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
+			Labels:    ls,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: ls,
@@ -259,4 +298,33 @@ func getPodNames(pods []corev1.Pod) []string {
 		podNames = append(podNames, pod.Name)
 	}
 	return podNames
+}
+
+//buildRoute returns the route resource
+func (r *ReconcileMemcached) routeForMemcached(m *cachev1alpha1.Memcached) *routev1.Route {
+
+	ls := labelsForMemcached(m.Name)
+	route := &routev1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name,
+			Namespace: m.Namespace,
+			Labels:    ls,
+		},
+		Spec: routev1.RouteSpec{
+			To: routev1.RouteTargetReference{
+				Kind: "Service",
+				Name: m.Name,
+			},
+			Port: &routev1.RoutePort{
+				TargetPort: intstr.FromString(m.Name),
+			},
+			TLS: &routev1.TLSConfig{
+				Termination: routev1.TLSTerminationEdge,
+			},
+		},
+	}
+
+	// Set MobileSecurityService mss as the owner and controller
+	controllerutil.SetControllerReference(m, route, r.scheme)
+	return route
 }
