@@ -1,4 +1,4 @@
-# Memcached Ansible Operator
+# Memcached Go Operator
 
 ## Overview
 
