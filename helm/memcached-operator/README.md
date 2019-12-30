@@ -34,20 +34,20 @@ $ operator-sdk build $IMAGE
 $ docker push $IMAGE
 ```
 
-**NOTE** The `quay.io/example-inc/memcached-operator` is an example. You should build and push the image for your repository. 
+**NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
 
 ### Using the image
 
 Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
 
 ```
-$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
+$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
 **Note**
 If you are performing these steps on OSX, use the following `sed` command instead:
 ```
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
 ### Installing
