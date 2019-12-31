@@ -20,7 +20,7 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 Checkout this Memcached Operator repository
 
 ```
-$ mkdir $GOPATH/src/github.com/operator-framework
+$ mkdir -p $GOPATH/src/github.com/operator-framework
 $ cd $GOPATH/src/github.com/operator-framework
 $ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/go/memcached-operator
@@ -47,12 +47,12 @@ $ docker push $IMAGE
 
 ```
 # Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
-$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
+$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
 # On OSX use:
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator|g' deploy/operator.yaml
+$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
 ```
 
-**NOTE** The `quay.io/example-inc/memcached-operator` is an example. You should build and push the image for your repository.
+**NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
 
 ### Installing
 
