@@ -16,8 +16,14 @@ rules:
   - configmaps
   - secrets
   verbs:
-  - '*'
-- apiGroups:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - apiGroups:
   - apps
   resources:
   - deployments
@@ -25,8 +31,14 @@ rules:
   - replicasets
   - statefulsets
   verbs:
-  - '*'
-- apiGroups:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -58,4 +70,11 @@ rules:
   resources:
   - '*'
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  
