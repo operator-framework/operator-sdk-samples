@@ -23,7 +23,7 @@ rules:
   - patch
   - update
   - watch
-  - apiGroups:
+- apiGroups:
   - apps
   resources:
   - deployments
@@ -63,6 +63,7 @@ rules:
   - apps
   resources:
   - replicasets
+  - deployments
   verbs:
   - get
 - apiGroups:
