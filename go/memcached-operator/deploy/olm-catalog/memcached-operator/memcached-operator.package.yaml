@@ -3,4 +3,3 @@ channels:
   name: alpha
 defaultChannel: alpha
 packageName: memcached-operator
-    
