@@ -38,7 +38,7 @@ rules:
   - patch
   - update
   - watch
-  - apiGroups:
+- apiGroups:
   - monitoring.coreos.com
   resources:
   - servicemonitors
@@ -78,4 +78,3 @@ rules:
   - patch
   - update
   - watch
-  
