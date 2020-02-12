@@ -9,9 +9,9 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 - [dep][dep_tool] version v0.5.0+.
 - [go][go_tool] version v1.12+.
 - [docker][docker_tool] version 17.03+
-- [kubectl][kubectl_tool] v1.11.3+
+- [kubectl][kubectl_tool] v1.14.1+
 - [operator-sdk][operator_install]
-- Access to a Kubernetes v1.11.3+ cluster
+- Access to a Kubernetes v1.14.1+ cluster
 
 ## Getting Started
 
