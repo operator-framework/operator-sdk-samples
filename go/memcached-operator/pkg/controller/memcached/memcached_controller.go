@@ -24,11 +24,6 @@ import (
 
 var log = logf.Log.WithName("controller_memcached")
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new Memcached Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
@@ -64,10 +59,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &cachev1alpha1.Memcached{},
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// blank assignment to verify that ReconcileMemcached implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileMemcached{}
 
 // ReconcileMemcached reconciles a Memcached object
@@ -88,7 +90,7 @@ type ReconcileMemcached struct {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling Memcached")
+	reqLogger.Info("Reconciling Memcached.")
 
 	// Fetch the Memcached instance
 	memcached := &cachev1alpha1.Memcached{}
@@ -98,44 +100,62 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted")
+			reqLogger.Info("Memcached resource not found. Ignoring since object must be deleted.")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		reqLogger.Error(err, "Failed to get Memcached")
+		reqLogger.Error(err, "Failed to get Memcached.")
 		return reconcile.Result{}, err
 	}
 
-	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, found)
+	// Check if the Deployment already exists, if not create a new one
+	deployment := &appsv1.Deployment{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, deployment)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
+		// Define a new Deployment
 		dep := r.deploymentForMemcached(memcached)
-		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		reqLogger.Info("Creating a new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			reqLogger.Error(err, "Failed to create new Deployment.", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
+		// NOTE: that the requeue is made with the purpose to provide the deployment object for the next step to ensure the deployment size is the same as the spec.
+		// Also, you could GET the deployment object again instead of requeue if you wish. See more over it here: https://godoc.org/sigs.k8s.io/controller-runtime/pkg/reconcile#Reconciler
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment")
+		reqLogger.Error(err, "Failed to get Deployment.")
 		return reconcile.Result{}, err
 	}
 
 	// Ensure the deployment size is the same as the spec
 	size := memcached.Spec.Size
-	if *found.Spec.Replicas != size {
-		found.Spec.Replicas = &size
-		err = r.client.Update(context.TODO(), found)
+	if *deployment.Spec.Replicas != size {
+		deployment.Spec.Replicas = &size
+		err = r.client.Update(context.TODO(), deployment)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			reqLogger.Error(err, "Failed to update Deployment.", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
 			return reconcile.Result{}, err
 		}
-		// Spec updated - return and requeue
-		return reconcile.Result{Requeue: true}, nil
+	}
+
+	// Check if the Service already exists, if not create a new one
+	// NOTE: The Service is used to expose the Deployment. However, the Service is not required at all for the memcached example to work. The purpose is to add more examples of what you can do in your operator project.
+	service := &corev1.Service{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: memcached.Name, Namespace: memcached.Namespace}, service)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new Service object
+		ser := r.serviceForMemcached(memcached)
+		reqLogger.Info("Creating a new Service.", "Service.Namespace", ser.Namespace, "Service.Name", ser.Name)
+		err = r.client.Create(context.TODO(), ser)
+		if err != nil {
+			reqLogger.Error(err, "Failed to create new Service.", "Service.Namespace", ser.Namespace, "Service.Name", ser.Name)
+			return reconcile.Result{}, err
+		}
+	} else if err != nil {
+		reqLogger.Error(err, "Failed to get Service.")
+		return reconcile.Result{}, err
 	}
 
 	// Update the Memcached status with the pod names
@@ -145,8 +165,9 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		client.InNamespace(memcached.Namespace),
 		client.MatchingLabels(labelsForMemcached(memcached.Name)),
 	}
-	if err = r.client.List(context.TODO(), podList, listOpts...); err != nil {
-		reqLogger.Error(err, "Failed to list pods", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
+	err = r.client.List(context.TODO(), podList, listOpts...)
+	if err != nil {
+		reqLogger.Error(err, "Failed to list pods.", "Memcached.Namespace", memcached.Namespace, "Memcached.Name", memcached.Name)
 		return reconcile.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
@@ -156,7 +177,7 @@ func (r *ReconcileMemcached) Reconcile(request reconcile.Request) (reconcile.Res
 		memcached.Status.Nodes = podNames
 		err := r.client.Status().Update(context.TODO(), memcached)
 		if err != nil {
-			reqLogger.Error(err, "Failed to update Memcached status")
+			reqLogger.Error(err, "Failed to update Memcached status.")
 			return reconcile.Result{}, err
 		}
 	}
@@ -197,9 +218,32 @@ func (r *ReconcileMemcached) deploymentForMemcached(m *cachev1alpha1.Memcached) 
 			},
 		},
 	}
-	// Set Memcached instance as the owner and controller
+	// Set Memcached instance as the owner of the Deployment.
 	controllerutil.SetControllerReference(m, dep, r.scheme)
 	return dep
+}
+
+// serviceForMemcached function takes in a Memcached object and returns a Service for that object.
+func (r *ReconcileMemcached) serviceForMemcached(m *cachev1alpha1.Memcached) *corev1.Service {
+	ls := labelsForMemcached(m.Name)
+	ser := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name,
+			Namespace: m.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: ls,
+			Ports: []corev1.ServicePort{
+				{
+					Port: 11211,
+					Name: m.Name,
+				},
+			},
+		},
+	}
+	// Set Memcached instance as the owner of the Service.
+	controllerutil.SetControllerReference(m, ser, r.scheme)
+	return ser
 }
 
 // labelsForMemcached returns the labels for selecting the resources
