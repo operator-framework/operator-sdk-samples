@@ -7,9 +7,9 @@ This Memcached operator is a simple example of the Operator SDK Helm-based opera
 ## Prerequisites
 
 - [docker][docker_tool] version 17.03+
-- [kubectl][kubectl_tool] v1.12+
+- [kubectl][kubectl_tool] v1.14.1+
 - [operator SDK][operator_install]
-- Access to a Kubernetes v1.14.5+ cluster
+- Access to a Kubernetes v1.14.1+ cluster
 
 ## Getting Started
 

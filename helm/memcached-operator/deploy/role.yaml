@@ -68,4 +68,10 @@ rules:
   resources:
   - '*'
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
