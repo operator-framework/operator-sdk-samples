@@ -19,7 +19,7 @@
       msg: "{{ lookup('k8s', group='cache.example.com', api_version='v1alpha1', kind='Memcached', namespace=namespace, resource_name=custom_resource.metadata.name) }}"
 
   - name: Wait 2m for reconciliation to run
-    k8s_facts:
+    k8s_info:
       api_version: 'v1alpha1'
       kind: 'Memcached'
       namespace: '{{ namespace }}'
