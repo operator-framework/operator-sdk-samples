@@ -16,7 +16,7 @@ spec:
       containers:
         - name: memcached-operator
           # Replace this with the built image name
-          image: quay.io/btenneti/memcached-operator:v0.0.5
+          image: REPLACE_IMAGE
           command:
           - memcached-operator
           imagePullPolicy: Always
