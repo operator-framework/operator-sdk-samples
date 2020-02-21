@@ -1,8 +1,7 @@
 apiVersion: v1
-appVersion: 1.5.12
+appVersion: 1.5.20
 description: Free & open source, high-performance, distributed memory object caching
   system.
-engine: gotpl
 home: http://memcached.org/
 icon: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/1024px-Memcached.svg.png
 keywords:
@@ -18,4 +17,4 @@ maintainers:
 name: memcached
 sources:
 - https://github.com/docker-library/memcached
-version: 3.0.1
+version: 3.2.2

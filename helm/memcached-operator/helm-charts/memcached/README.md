@@ -47,7 +47,8 @@ The following table lists the configurable parameters of the Memcached chart and
 | `memcached.verbosity`      | Verbosity level (v, vv, or vvv) | Un-set.                                                 |
 | `memcached.maxItemMemory`  | Max memory for items (in MB)    | `64`                                                    |
 | `memcached.extraArgs`      | Additional memcached arguments  | `[]`                                                    |
-| `metrics.enabled`          | Expose metrics in prometheus format | false                                               |
+| `metrics.enabled`          | Expose metrics in prometheus format | false                                              
+             
 | `metrics.image`            | The image to pull and run for the metrics exporter | A recent official memcached tag      |
 | `metrics.imagePullPolicy`  | Image pull policy               | `Always` if `imageTag` is `latest`, else `IfNotPresent` |
 | `metrics.resources`        | CPU/Memory resource requests/limits for the metrics exporter | `{}`                       |
@@ -127,3 +128,5 @@ spec:
 ```
 
 Once you've done this, you can upgrade to 3.x with Helm as normal.
+
+
