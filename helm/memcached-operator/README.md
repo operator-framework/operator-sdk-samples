@@ -99,7 +99,8 @@ This project was created by using the following command, which means that it is 
 ```shell
 operator-sdk new memcached-operator --api-version=cache.example.com/v1alpha1 --kind=Memcached --type=helm --helm-chart=stable/memcached
 ```
-Note that for you are able to use the stable helm charts you need have helm installed as the stable repo added on it. For further information see the [Helm Quick Start][helm-quick].
+
+Note that you must have Helm installed locally and add the stable helm charts repo to it to use the `stable/memcached` Helm charts. See the [Helm Quick Start guide][helm-quick] for installation instructions.
 
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
