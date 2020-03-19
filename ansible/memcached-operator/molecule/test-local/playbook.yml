@@ -1,30 +1,43 @@
 ---
-
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
-  vars:
-    image_name: cache.example.com/memcached-operator:testing
-  tasks:
-  # using command so we don't need to install any dependencies
-  - name: Get existing image hash
-    command: docker images -q {{ image_name }}
-    register: prev_hash
-    changed_when: false
+  collections:
+   - community.kubernetes
 
-  - name: Build Operator Image
-    command: docker build -f /build/build/Dockerfile -t {{ image_name }} /build
-    register: build_cmd
-    changed_when: not prev_hash.stdout or (prev_hash.stdout and prev_hash.stdout not in ''.join(build_cmd.stdout_lines[-2:]))
+  vars:
+    image: cache.example.com/memcached-operator:testing
+
+  tasks:
+    # using command so we don't need to install any dependencies
+    - name: Get existing image hash
+      command: docker images -q {{ image }}
+      register: prev_hash_raw
+      changed_when: false
+
+    - name: Build Operator Image
+      command: docker build -f /build/build/Dockerfile -t {{ image }} /build
+      register: build_cmd
+      changed_when: not hash or (hash and hash not in cmd_out)
+      vars:
+        hash: '{{ prev_hash_raw.stdout }}'
+        cmd_out: '{{ "".join(build_cmd.stdout_lines[-2:]) }}'
 
 - name: Converge
   hosts: localhost
   connection: local
+
+  collections:
+   - community.kubernetes
+
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
     deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
     pull_policy: Never
     REPLACE_IMAGE: cache.example.com/memcached-operator:testing
     custom_resource: "{{ lookup('file', '/'.join([deploy_dir, 'crds/cache.example.com_v1alpha1_memcached_cr.yaml'])) | from_yaml }}"
+    image: cache.example.com/memcached-operator:testing
+    operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"
+
   tasks:
   - block:
     - name: Delete the Operator Deployment

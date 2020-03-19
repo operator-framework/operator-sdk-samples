@@ -81,14 +81,10 @@ To uninstall all that was performed in the above step run `make uninstall`.
 Use the following command to check the operator logs. 
 
 ```
-kubectl logs deployment.apps/memcached-operator -c operator -n memcached
+kubectl logs deployment.apps/memcached-operator -n memcached
 ```
 
-Use the following command to check the Ansible logs. 
-
-```
-kubectl logs deployment.apps/memcached-operator -c ansible -n memcached
-```
+**NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default. 
 
 **NOTE** To have further information about how to develop Ansible operators with [Operator-SDK][operator_sdk] check the [Ansible User Guide for Operator-SDK][ansible-guide]
 
