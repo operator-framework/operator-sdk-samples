@@ -17,8 +17,8 @@ spec:
       containers:
         - name: memcached-operator
           # Replace this with the built image name
-          image: "REPLACE_IMAGE"
-          imagePullPolicy: "Always"
+          image: "{{ image }}"
+          imagePullPolicy: "{{ pull_policy }}"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
             name: runner
@@ -35,10 +35,6 @@ spec:
               value: "memcached-operator"
             - name: ANSIBLE_GATHERING
               value: explicit
-            - name: ANSIBLE_VERBOSITY
-              value: "4"
-            - name: ANSIBLE_DEBUG_LOGS
-              value: "True"
       volumes:
         - name: runner
           emptyDir: {}
