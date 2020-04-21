@@ -1,5 +1,0 @@
-channels:
-- currentCSV: memcached-operator.v0.15.2
-  name: alpha
-defaultChannel: alpha
-packageName: memcached-operator
