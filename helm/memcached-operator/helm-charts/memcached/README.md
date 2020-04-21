@@ -128,18 +128,4 @@ spec:
 
 Once you've done this, you can upgrade to 3.x with Helm as normal.
 
-If you want prometheus-operator scrap all serviceMonitors in your cluster you need to set:
-```yaml
-prometheus:
-  prometheusSpec:
-    serviceMonitorSelectorNilUsesHelmValues: false
-```
-If you want to be specific:
-```yaml
-prometheus:
-  prometheusSpec:
-    serviceMonitorSelector:
-      matchLabels:
-        app: memcached
-```
-You can have more intel in prometheus-operator values and here [github](https://github.com/helm/charts/issues/11310#issuecomment-463486706)
+
