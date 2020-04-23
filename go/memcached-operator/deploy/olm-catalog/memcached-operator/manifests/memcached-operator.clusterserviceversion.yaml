@@ -16,7 +16,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v0.14.0
+  name: memcached-operator.v0.17.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -28,6 +28,9 @@ spec:
       version: v1alpha1
   description: Operator-SDK Go Memcached sample.
   displayName: Memcached Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
   install:
     spec:
       deployments:
@@ -150,13 +153,13 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-    - memcached
-    - app
+  - memcached
+  - app
   maintainers:
-    - email: corp@example.com
-      name: Some Corp
+  - email: corp@example.com
+    name: Some Corp
   maturity: alpha
   provider:
     name: Example
     url: www.example.com
-  version: 0.14.0
+  version: 0.17.0
