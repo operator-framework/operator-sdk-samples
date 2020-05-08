@@ -49,7 +49,7 @@ $ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' de
 
 Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
 
-Following the expected result. 
+Following the expected result.
 
 ```shell
 $ kubectl get all -n memcached
@@ -72,19 +72,19 @@ replicaset.apps/example-memcached-memcached-b885dcc75   3         3         3   
 replicaset.apps/memcached-operator-df88b85f7            1         1         1       36s
 ```
 
-### Uninstalling 
+### Uninstalling
 
 To uninstall all that was performed in the above step run `make uninstall`.
 
 ### Troubleshooting
 
-Use the following command to check the operator logs. 
+Use the following command to check the operator logs.
 
 ```
 kubectl logs deployment.apps/memcached-operator -n memcached
 ```
 
-**NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default. 
+**NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default.
 
 **NOTE** To have further information about how to develop Ansible operators with [Operator-SDK][operator_sdk] check the [Ansible User Guide for Operator-SDK][ansible-guide]
 
@@ -97,6 +97,6 @@ See [Testing Ansible Operators with Molecule][ansible-test-guide] documentation 
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
 [operator_sdk]: https://github.com/operator-framework/operator-sdk
-[operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
-[ansible-test-guide]: https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/dev/testing_guide.md
-[ansible-guide]: https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md
+[operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
+[ansible-test-guide]: https://sdk.operatorframework.io/docs/ansible/testing-guide/
+[ansible-guide]: https://sdk.operatorframework.io/docs/ansible/quickstart/

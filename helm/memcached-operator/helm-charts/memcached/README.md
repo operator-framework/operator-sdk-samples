@@ -2,7 +2,7 @@
 
 > [Memcached](https://memcached.org/) is an in-memory key-value store for small chunks of arbitrary data (strings, objects) from results of database calls, API calls, or page rendering.
 
-Based on the [memcached](https://github.com/bitnami/charts/tree/master/incubator/memcached) chart from the [Bitnami Charts](https://github.com/bitnami/charts) repository.
+Based on the [memcached](https://github.com/helm/charts/tree/master/stable/memcached) chart from the [Helm Charts](https://github.com/helm/charts) repository.
 
 ## TL;DR;
 
@@ -127,5 +127,3 @@ spec:
 ```
 
 Once you've done this, you can upgrade to 3.x with Helm as normal.
-
-

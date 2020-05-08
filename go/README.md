@@ -3,5 +3,5 @@ This project is a component of the [Operator Framework](https://github.com/opera
 # Operator SDK Samples - Go
 This directory contains samples of operators powered by Go built using the [operator-sdk][operator_sdk]. To learn more about creating an operator that leverages Golang, check out the [user guide][user_guide].
 
-[operator_sdk]:https://github.com/coreos/operator-sdk
-[user_guide]:https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md
+[operator_sdk]:https://github.com/operator-framework/operator-sdk
+[user_guide]:https://sdk.operatorframework.io/docs/golang/quickstart/

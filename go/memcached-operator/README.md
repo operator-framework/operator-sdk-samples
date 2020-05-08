@@ -6,8 +6,7 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 
 ## Prerequisites
 
-- [dep][dep_tool] version v0.5.0+.
-- [go][go_tool] version v1.12+.
+- [go][go_tool] version v1.13+.
 - [docker][docker_tool] version 17.03+
 - [kubectl][kubectl_tool] v1.14.1+
 - [operator-sdk][operator_install]
@@ -61,7 +60,7 @@ Run `make install` to install the operator. Check that the operator is running i
 Following the expected result.
 
 ```shell
-$ kubectl get all -n memcached 
+$ kubectl get all -n memcached
 NAME                                      READY   STATUS    RESTARTS   AGE
 pod/example-memcached-7c4df9b7b4-lzd6j    1/1     Running   0          64s
 pod/example-memcached-7c4df9b7b4-wbtkz    1/1     Running   0          64s
@@ -96,11 +95,12 @@ kubectl logs deployment.apps/memcached-operator -n memcached
 ### Running Tests
 
 Run `make test-e2e` to run the integration e2e tests with different options. For
-more information see the [writing e2e tests](https://github.com/operator-framework/operator-sdk/blob/master/doc/test-framework/writing-e2e-tests.md) guide.
+more information see the [writing e2e tests][golang-e2e-tests] guide.
 
 [dep_tool]: https://golang.github.io/dep/docs/installation.html
 [go_tool]: https://golang.org/dl/
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
 [operator_sdk]: https://github.com/operator-framework/operator-sdk
-[operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
+[operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
+[golang-e2e-tests]: https://sdk.operatorframework.io/docs/golang/e2e-tests/
