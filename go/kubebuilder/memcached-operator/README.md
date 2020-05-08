@@ -87,5 +87,5 @@ $ kubectl logs deployment.apps/memcached-operator-controller-manager -n  memcach
 [docker_tool]: https://docs.docker.com/install/
 [kustomize]: https://github.com/kubernetes-sigs/kustomize/blob/master/docs/INSTALL.md
 [operator_sdk]: https://github.com/operator-framework/operator-sdk
-[operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
+[operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
 [quickstart]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/kubebuilder/quickstart.md#implement-the-controller

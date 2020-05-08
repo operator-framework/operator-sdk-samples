@@ -3,5 +3,5 @@ This project is a component of the [Operator Framework](https://github.com/opera
 # Operator SDK Samples - Ansible
 This directory contains samples of operators powered by Ansible built using the [operator-sdk][operator_sdk]. To learn more about creating an operator that leverages Ansible, check out the [Ansible user guide][ansible_user_guide].
 
-[operator_sdk]:https://github.com/coreos/operator-sdk
-[ansible_user_guide]:https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md
+[operator_sdk]:https://github.com/operator-framework/operator-sdk
+[ansible_user_guide]:https://sdk.operatorframework.io/docs/ansible/quickstart/

@@ -3,5 +3,5 @@ This project is a component of the [Operator Framework](https://github.com/opera
 # Operator SDK Samples - Helm
 This directory contains samples of operators powered by Helm built using the [operator-sdk][operator_sdk]. To learn more about creating an operator that leverages Helm, check out the [Helm user guide][helm_user_guide].
 
-[operator_sdk]:https://github.com/coreos/operator-sdk
-[helm_user_guide]:https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md
+[operator_sdk]:https://github.com/operator-framework/operator-sdk
+[helm_user_guide]:https://sdk.operatorframework.io/docs/helm/quickstart/

@@ -78,13 +78,13 @@ NAME                                 READY   AGE   CONTAINERS          IMAGES
 statefulset.apps/example-memcached   3/3     37s   example-memcached   memcached:1.5.12-alpine
 ```
 
-### Uninstalling 
+### Uninstalling
 
 Run `make uninstall` to uninstall all that was performed in the above step.
 
 ### Troubleshooting
 
-Run the following command to check the operator logs. 
+Run the following command to check the operator logs.
 
 ```shell
 kubectl logs deployment.apps/memcached-operator -n helm-memcached
@@ -104,7 +104,7 @@ Note that you must have Helm installed locally and add the stable helm charts re
 
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
-[operator_install]: https://github.com/operator-framework/operator-sdk/blob/master/doc/user/install-operator-sdk.md
-[helm_guide]: https://github.com/operator-framework/operator-sdk/blob/master/doc/helm/user-guide.md
+[operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
+[helm_guide]: https://sdk.operatorframework.io/docs/helm/quickstart/
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [helm-quick]: https://helm.sh/docs/intro/quickstart/
