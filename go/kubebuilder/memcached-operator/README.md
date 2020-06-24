@@ -41,16 +41,18 @@ Build the Memcached operator image and push it to a public registry, such as qua
 ```
 $ make install
 $ export IMG=quay.io/example-inc/memcached-operator:v0.0.1
-$ make docker-build $IMG
-$ docker push $IMG
-$ make deploy $IMG
+$ make docker-build IMG=$IMG
+$ docker push IMG=$IMG
 ```
 
 **NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
+As this example showcases validation webhook creation, please follow [this][certmanager] guide to install cert-mamager into cluster prior to deployment.
 
 Please verify expected result.
 
 ```shell
+$ make deploy IMG=$IMG
+
 $ kubectl get all -n memcached-operator-system 
 NAME                                                         READY   STATUS    RESTARTS   AGE
 pod/memcached-operator-controller-manager-864f7c75d4-7cf47   2/2     Running   0          118s
@@ -68,6 +70,17 @@ deployment.apps/memcached-sample                        3/3     3            3  
 NAME                                                               DESIRED   CURRENT   READY   AGE
 replicaset.apps/memcached-operator-controller-manager-864f7c75d4   1         1         1       118s
 ```
+
+### Verify Webhooks
+```
+$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge -n memcached-operator-system
+```
+Above command to increase the pod size to even number should throw error as shown below, as the validation webhook does not allow even number pods.
+
+```
+Error from server (Cluster size must be an odd number): admission webhook "vmemcached.kb.io" denied the request: Cluster size must be an odd number
+```
+
 
 ### Uninstalling
 
@@ -89,3 +102,4 @@ $ kubectl logs deployment.apps/memcached-operator-controller-manager -n  memcach
 [operator_sdk]: https://github.com/operator-framework/operator-sdk
 [operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
 [quickstart]: https://github.com/operator-framework/operator-sdk/blob/master/website/content/en/docs/kubebuilder/quickstart.md#implement-the-controller
+[certmanager]: https://cert-manager.io/docs/installation/kubernetes/
