@@ -44,7 +44,6 @@ uninstall: manifests
 deploy: manifests
 	cd config/manager && kustomize edit set image controller=${IMG}
 	kustomize build config/default | kubectl apply -f -
-	- kubectl create -f config/samples/cache_v1alpha1_memcached.yaml -n ${NAMESPACE}
 
 
 # Generate manifests e.g. CRD, RBAC etc.

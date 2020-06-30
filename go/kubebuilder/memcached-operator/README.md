@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Memcached operator is a simple example operator using the [Operator SDK][operator_sdk] CLI tool and controller-runtime library API.
+This Memcached operator is a simple example operator using the [Operator SDK][operator_sdk] CLI tool and controller-runtime library API, using validation webhooks.
 For more detailed information on project creation, please refer [Quickstart][quickstart].
 
 ## Prerequisites
@@ -11,6 +11,7 @@ For more detailed information on project creation, please refer [Quickstart][qui
 - [docker][docker_tool] version 17.03+
 - [kubectl][kubectl_tool] v1.11.3+
 - [kustomize][kustomize] v3.1.0+
+- [certmanager][certmanager]
 - [operator-sdk][operator_install]
 - Access to a Kubernetes v1.11.3+ cluster
 
@@ -41,17 +42,23 @@ Build the Memcached operator image and push it to a public registry, such as qua
 ```
 $ make install
 $ export IMG=quay.io/example-inc/memcached-operator:v0.0.1
-$ make docker-build IMG=$IMG
-$ docker push IMG=$IMG
+$ make docker-build docker-push IMG=$IMG
 ```
 
 **NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
 As this example showcases validation webhook creation, please follow [this][certmanager] guide to install cert-mamager into cluster prior to deployment.
 
+### Deploying your operator and creating CR instance.
+```shell
+
+$ make deploy IMG=$IMG
+
+$ kubectl create -f config/samples/cache_v1alpha1_memcached.yaml -n  memcached-operator-system
+```
+
 Please verify expected result.
 
 ```shell
-$ make deploy IMG=$IMG
 
 $ kubectl get all -n memcached-operator-system 
 NAME                                                         READY   STATUS    RESTARTS   AGE
