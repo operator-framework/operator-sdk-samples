@@ -39,12 +39,6 @@ spec:
               value: "4"
             - name: ANSIBLE_DEBUG_LOGS
               value: "True"
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 6789
-            initialDelaySeconds: 5
-            periodSeconds: 3
       volumes:
         - name: runner
           emptyDir: {}
