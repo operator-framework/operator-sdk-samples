@@ -16,7 +16,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-  name: memcached-operator.v0.17.0
+  name: memcached-operator.v0.18.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -162,4 +162,4 @@ spec:
   provider:
     name: Example
     url: www.example.com
-  version: 0.17.0
+  version: 0.18.1

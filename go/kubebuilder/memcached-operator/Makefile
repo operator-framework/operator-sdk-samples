@@ -1,8 +1,6 @@
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
-# Namespace used for this example
-NAMESPACE=memcached-operator-system 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -28,23 +26,23 @@ run: generate fmt vet manifests
 	go run ./main.go
 
 # Install CRDs into a cluster
-install: manifests
-	kustomize build config/crd | kubectl apply -f -
+install: manifests kustomize
+	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 # Uninstall CRDs from a cluster
-uninstall: manifests
-	@echo ....... Uninstalling .......
-	kustomize build config/crd | kubectl delete -f -
-	- kubectl delete deployments,service -l control-plane=controller-manager -n ${NAMESPACE}
-	- kubectl delete role,rolebinding --all -n ${NAMESPACE}
-	@echo ....... Deleting namespace ${NAMESPACE}.......
-	- kubectl delete namespace ${NAMESPACE}	
+uninstall: manifests kustomize
+	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
+deploy: manifests kustomize
 	cd config/manager && kustomize edit set image controller=${IMG}
-	kustomize build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
+# UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
+# Note that it was added for we are allowed to uninstall the files. However, it will be present by default in the future
+# versions.
+undeploy:
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -79,10 +77,25 @@ ifeq (, $(shell which controller-gen))
 	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$CONTROLLER_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5 ;\
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.3.0 ;\
 	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
 	}
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
+endif
+
+kustomize:
+ifeq (, $(shell which kustomize))
+	@{ \
+	set -e ;\
+	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
+	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
+	go mod init tmp ;\
+	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
+	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
+	}
+KUSTOMIZE=$(GOBIN)/kustomize
+else
+KUSTOMIZE=$(shell which kustomize)
 endif
