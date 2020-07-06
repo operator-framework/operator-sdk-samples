@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Memcached operator is a simple example operator using the [Operator SDK][operator_sdk] CLI tool and controller-runtime library API, using validation webhooks.
+This Memcached operator is a simple example operator using the [Operator SDK][operator_sdk] CLI tool and controller-runtime library API.
 For more detailed information on project creation, please refer [Quickstart][quickstart].
 
 ## Prerequisites
@@ -39,20 +39,28 @@ $ go mod tidy
 
 Build the Memcached operator image and push it to a public registry, such as quay.io:
 
-```
-
+```shell
 $ export IMG=quay.io/example-inc/memcached-operator:v0.0.1
 $ make docker-build docker-push IMG=$IMG
 ```
 
 **NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
 
-### Deploying your operator and creating CR instance.
-```shell
+### Instaling Operator API
 
-$ make install
+Install the CRDs into the cluster:
+
+```shell
+make install
+```
+### Deploying your operator 
+
+Deploy the Memcached Operator to the cluster with image specified by IMG
+
+```shell
 $ make deploy IMG=$IMG
 ```
+
 ### Create memcached-sample instances.
 
 ```shell
@@ -81,16 +89,15 @@ NAME                                                               DESIRED   CUR
 replicaset.apps/memcached-operator-controller-manager-864f7c75d4   1         1         1       118s
 ```
 
-### Verify Webhooks
-```
-$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge -n memcached-operator-system
-```
-Above command to increase the pod size to even number should throw error as shown below, as the validation webhook does not allow even number pods.
+### Verifying the validating webhook
 
-```
+The following command attempts to increase the CR's `spec.size` to an even number. It should throw an error, like that shown below, as the validating webhook does not allow an even `spec.size`.
+
+```console
+$ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge -n memcached-operator-system
+
 Error from server (Cluster size must be an odd number): admission webhook "vmemcached.kb.io" denied the request: Cluster size must be an odd number
 ```
-
 
 ### Uninstalling
 
