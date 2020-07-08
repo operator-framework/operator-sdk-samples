@@ -51,7 +51,7 @@ $ make docker-build docker-push IMG=$IMG
 Install the CRDs into the cluster:
 
 ```shell
-make install
+$ make install
 ```
 ### Deploying your operator 
 
