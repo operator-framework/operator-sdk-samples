@@ -91,7 +91,7 @@ replicaset.apps/memcached-operator-controller-manager-864f7c75d4   1         1  
 
 ### Verifying the validating webhook
 
-The following command attempts to increase the CR's `spec.size` to an even number. It should throw an error, like that shown below, as the validating webhook does not allow an even `spec.size`.
+The following command attempts to increase the CR's `spec.size` to an even number. It should throw an error like that shown below, as the validating webhook does not allow an even `spec.size`.
 
 ```console
 $ kubectl patch memcached memcached-sample -p '{"spec":{"size": 4}}' --type=merge -n memcached-operator-system
