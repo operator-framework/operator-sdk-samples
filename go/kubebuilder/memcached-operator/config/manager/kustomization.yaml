@@ -5,3 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/example-inc/memcached-operator
+  newTag: v0.0.1
