@@ -1,0 +1,51 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v0.19.0+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+  name: memcached-operator.vX.Y.Z
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Memcached is the Schema for the memcacheds API
+      displayName: Memcached
+      kind: Memcached
+      name: memcacheds.cache.example.com
+      version: v1alpha1
+  description: Operator-SDK Go Memcached sample.
+  displayName: Memcached Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - memcached
+  - app
+  links:
+  - name: Memcached Operator
+    url: https://memcached-operator.domain
+  maintainers:
+  - email: corp@example.com
+    name: Some Corp
+  maturity: alpha
+  provider:
+    name: Example
+    url: www.example.com
+  version: 0.0.0
