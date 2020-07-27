@@ -90,13 +90,8 @@ Use the following command to check the operator logs.
 $ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
 
-**NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default.
+**NOTE** To have further information about how to develop Ansible operators with [Operator-SDK][operator_sdk] check the [Ansible docs][ansible-docs].
 
-**NOTE** To have further information about how to develop Ansible operators with [Operator-SDK][operator_sdk] check the [Ansible User Guide for Operator-SDK][ansible-guide]
-
-### Testing the Operator
-
-See [Testing Ansible Operators with Molecule][ansible-test-guide] documentation to know how to use the operator framework features to test it.  
 
 [python]: https://www.python.org/
 [ansible]: https://www.ansible.com/
@@ -104,5 +99,4 @@ See [Testing Ansible Operators with Molecule][ansible-test-guide] documentation 
 [docker_tool]: https://docs.docker.com/install/
 [operator_sdk]: https://github.com/operator-framework/operator-sdk
 [operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
-[ansible-test-guide]: https://sdk.operatorframework.io/docs/ansible/testing-guide/
-[ansible-guide]: https://sdk.operatorframework.io/docs/ansible/quickstart/
+[ansible-docs]: https://sdk.operatorframework.io/docs/docs/building-operators/ansible/
