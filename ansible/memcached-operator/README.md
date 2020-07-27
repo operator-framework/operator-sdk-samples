@@ -8,7 +8,7 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 
 - [docker][docker_tool] version 17.03+
 - [kubectl][kubectl_tool] v1.14.1+
-- [operator_sdk][operator_install]
+- [operator_sdk][operator_install] v1.0.0+
 - Access to a Kubernetes v1.14.1+ cluster
 
 ## Getting Started
@@ -24,52 +24,58 @@ $ git clone https://github.com/operator-framework/operator-sdk-samples.git
 $ cd operator-sdk-samples/ansible/memcached-operator
 ```
 
-### Building the operator
+## Building and Pushing the Project Image
 
-Build the Memcached operator image and push it to a public registry, such as quay.io:
-
+To build and push your image to your repository :
 ```
-$ export IMAGE=quay.io/example-inc/memcached-operator:v0.0.1
-$ operator-sdk build $IMAGE
-$ docker push $IMAGE
+$ make docker-build docker-push IMG=<some-registry>/<project-name>:tag
 ```
 
-**NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
+Note: To allow the cluster pull the image the repository needs to be set as public.
 
-### Using the image
+## Applying the CRDs into the cluster:
 
+To apply the Memcached Kind(CRD):
 ```
-# Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
-$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
-# On OSX use:
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
+$ make install
 ```
 
-### Installing
+## Applying the CR’s into the cluster:
 
-Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
+To create instances (CR’s) of the Memcached Kind (CRD) in the same namespaced of the operator:
+```
+$ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-operator-system
+```
+
+## Running it on Cluster
+Deploy the project to the cluster:
+
+```
+$ make deploy IMG=<some-registry>/<project-name>:tag
+```
 
 Following the expected result.
 
 ```shell
-$ kubectl get all -n memcached
+ $ kubectl get all -n memcached-operator-system
+NAME                                                         READY   STATUS    RESTARTS   AGE
+pod/memcached-operator-controller-manager-7dbcd676f9-s9nrz   2/2     Running   0          113s
+pod/memcached-sample-memcached-6456bdd5fc-fdbfg              1/1     Running   0          67s
+pod/memcached-sample-memcached-6456bdd5fc-p97h8              1/1     Running   0          67s
+pod/memcached-sample-memcached-6456bdd5fc-q4wbb              1/1     Running   0          67s
 
-NAME                                              READY   STATUS    RESTARTS   AGE
-pod/example-memcached-memcached-b885dcc75-2crw5   1/1     Running   0          22s
-pod/example-memcached-memcached-b885dcc75-69mbg   1/1     Running   0          22s
-pod/example-memcached-memcached-b885dcc75-92rd7   1/1     Running   0          22s
-pod/memcached-operator-df88b85f7-9s98n            2/2     Running   0          36s
+NAME                                                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/memcached-operator-controller-manager-metrics-service   ClusterIP   10.96.153.103   <none>        8443/TCP   4h52m
 
-NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/memcached-operator-metrics   ClusterIP   10.98.192.187   <none>        8383/TCP   31s
+NAME                                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/memcached-operator-controller-manager   1/1     1            1           4h52m
+deployment.apps/memcached-sample-memcached              3/3     3            3           67s
 
-NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/example-memcached-memcached   3/3     3            3           22s
-deployment.apps/memcached-operator            1/1     1            1           36s
-
-NAME                                                    DESIRED   CURRENT   READY   AGE
-replicaset.apps/example-memcached-memcached-b885dcc75   3         3         3       22s
-replicaset.apps/memcached-operator-df88b85f7            1         1         1       36s
+NAME                                                               DESIRED   CURRENT   READY   AGE
+replicaset.apps/memcached-operator-controller-manager-5b7f656f48   0         0         0       4h52m
+replicaset.apps/memcached-operator-controller-manager-7dbcd676f9   1         1         1       113s
+replicaset.apps/memcached-operator-controller-manager-7dbdb5b9ff   0         0         0       52m
+replicaset.apps/memcached-sample-memcached-6456bdd5fc              3         3         3       67s
 ```
 
 ### Uninstalling
@@ -81,7 +87,7 @@ To uninstall all that was performed in the above step run `make uninstall`.
 Use the following command to check the operator logs.
 
 ```
-kubectl logs deployment.apps/memcached-operator -n memcached
+$ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
 
 **NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default.

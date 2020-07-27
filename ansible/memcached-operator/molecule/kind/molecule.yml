@@ -10,18 +10,11 @@ platforms:
   - name: cluster
     groups:
       - k8s
-      image: bsycorp/kind:latest-${KUBE_VERSION:-1.17}
-      privileged: True
-      override_command: no
-      exposed_ports:
-        - 8443/tcp
-        - 10080/tcp
-      published_ports:
-        - 0.0.0.0:${TEST_CLUSTER_PORT:-9443}:8443/tcp
-      pre_build_image: yes
 provisioner:
   name: ansible
-  log: True
+  playbooks:
+    prepare: ../default/prepare.yml
+    verify: ../default/verify.yml
   lint: |
     set -e
     ansible-lint
@@ -29,20 +22,19 @@ provisioner:
     group_vars:
       all:
         namespace: ${TEST_OPERATOR_NAMESPACE:-osdk-test}
-        kubeconfig_file: ${KUBECONFIG:-"~/.kube/config"}
     host_vars:
       localhost:
         ansible_python_interpreter: '{{ ansible_playbook_python }}'
         config_dir: ${MOLECULE_PROJECT_DIRECTORY}/config
         samples_dir: ${MOLECULE_PROJECT_DIRECTORY}/config/samples
-        operator_image: ${OPERATOR_IMAGE:-""}
-        operator_pull_policy: ${OPERATOR_PULL_POLICY:-"Always"}
+        project_dir: ${MOLECULE_PROJECT_DIRECTORY}
+        operator_image: testing-operator
+        pull_policy: "Never"
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         kustomize: ${KUSTOMIZE_PATH:-kustomize}
   env:
-    K8S_AUTH_KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
-    KUBECONFIG: ${KUBECONFIG:-"~/.kube/config"}
-    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/roles
-    KIND_PORT: '${TEST_CLUSTER_PORT:-9443}'
+    K8S_AUTH_KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
+    KUBECONFIG: ${MOLECULE_EPHEMERAL_DIRECTORY}/kubeconfig
 verifier:
   name: ansible
   lint: |

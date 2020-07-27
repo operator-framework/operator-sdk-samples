@@ -1,0 +1,27 @@
+---
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - cache.example.com
+    resources:
+      - memcacheds
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - cache.example.com
+    resources:
+      - memcacheds/status
+    verbs:
+      - get
+      - patch
+      - update
