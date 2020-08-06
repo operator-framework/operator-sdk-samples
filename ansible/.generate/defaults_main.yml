@@ -1,4 +1,2 @@
----
-# defaults file for Memcached
 # Update file in operator-sdk-samples/ansible/generate/defaults_main.yml
 size: 1

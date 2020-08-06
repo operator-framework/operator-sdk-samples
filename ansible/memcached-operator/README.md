@@ -2,7 +2,10 @@
 
 ## Overview
 
-This Memcached operator is a simple example operator for the [Operator SDK][operator_sdk] and includes some basic end-to-end tests.
+This Memcached operator is a simple example operator for the [Operator SDK][operator_sdk]. It includes:
+  * A Custom Resource Definition for `Memcached` resources
+  * An Ansible-based controller to respond to `Memcached` resources
+  * Molecule-based tests for the Ansible role.
 
 ## Prerequisites
 
@@ -18,85 +21,84 @@ This Memcached operator is a simple example operator for the [Operator SDK][oper
 Checkout this Memcached Operator repository
 
 ```
-$ mkdir operator-framework
-$ cd operator-framework
-$ git clone https://github.com/operator-framework/operator-sdk-samples.git
-$ cd operator-sdk-samples/ansible/memcached-operator
+git clone https://github.com/operator-framework/operator-sdk-samples.git
+cd operator-sdk-samples/ansible/memcached-operator
 ```
 
 ### Building the operator
 
 Build the Memcached operator image and push it to a public registry, such as quay.io:
 
-```
-$ export IMAGE=quay.io/example-inc/memcached-operator:v0.0.1
-$ operator-sdk build $IMAGE
-$ docker push $IMAGE
-```
-
-**NOTE** The `quay.io/example-inc/memcached-operator:v0.0.1` is an example. You should build and push the image for your repository.
-
-### Using the image
-
-```
-# Update the operator manifest to use the built image name (if you are performing these steps on OSX, see note below)
-$ sed -i 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
-# On OSX use:
-$ sed -i "" 's|REPLACE_IMAGE|quay.io/example-inc/memcached-operator:v0.0.1|g' deploy/operator.yaml
+```sh
+export IMG=quay.io/example-inc/memcached-operator:v0.0.1
+docker push IMG=$IMG
 ```
 
-### Installing
+**NOTE** To allow the cluster pull the image the repository needs to be set as public or you must configure an image pull secret.
 
-Run `make install` to install the operator. Check that the operator is running in the cluster, also check that the example Memcached service was deployed.
+### Run the operator
 
-Following the expected result.
+Deploy the project to the cluster. Set `IMG` with `make deploy` to use the image you just pushed:
 
-```shell
-$ kubectl get all -n memcached
+### Create a `Memcached` resource
 
-NAME                                              READY   STATUS    RESTARTS   AGE
-pod/example-memcached-memcached-b885dcc75-2crw5   1/1     Running   0          22s
-pod/example-memcached-memcached-b885dcc75-69mbg   1/1     Running   0          22s
-pod/example-memcached-memcached-b885dcc75-92rd7   1/1     Running   0          22s
-pod/memcached-operator-df88b85f7-9s98n            2/2     Running   0          36s
+Apply the sample Custom Resource:
 
-NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/memcached-operator-metrics   ClusterIP   10.98.192.187   <none>        8383/TCP   31s
-
-NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/example-memcached-memcached   3/3     3            3           22s
-deployment.apps/memcached-operator            1/1     1            1           36s
-
-NAME                                                    DESIRED   CURRENT   READY   AGE
-replicaset.apps/example-memcached-memcached-b885dcc75   3         3         3       22s
-replicaset.apps/memcached-operator-df88b85f7            1         1         1       36s
+```sh
+kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-operator-system
 ```
 
-### Uninstalling
+Run the following command to verify that the installation was successful:
 
-To uninstall all that was performed in the above step run `make uninstall`.
+```console
+$ kubectl get all -n memcached-operator-system
 
+NAME                                                        READY   STATUS    RESTARTS   AGE
+pod/memcached-operator-controller-manager-f896cd75b-v5jqc   2/2     Running   0          19s
+pod/memcached-sample-memcached-6456bdd5fc-hwgnd             1/1     Running   0          12s
+
+NAME                                                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/memcached-operator-controller-manager-metrics-service   ClusterIP   10.102.107.68   <none>        8443/TCP   19s
+
+NAME                                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/memcached-operator-controller-manager   1/1     1            1           19s
+deployment.apps/memcached-sample-memcached              1/1     1            1           12s
+
+NAME                                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/memcached-operator-controller-manager-f896cd75b   1         1         1       19s
+replicaset.apps/memcached-sample-memcached-6456bdd5fc             1         1         1       12s
+```
+
+### Cleanup
+
+To leave the operator, but remove the memcached sample pods, delete the
+CR.
+
+```sh
+kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-operator-system
+```
+
+To clean up everything:
+
+```sh
+make undeploy
+```
 ### Troubleshooting
 
-Use the following command to check the operator logs.
+Run the following command to check the operator logs.
 
+```sh
+kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
-kubectl logs deployment.apps/memcached-operator -n memcached
-```
 
-**NOTE:** This project is configured with the environment variable `ANSIBLE_DEBUG_LOGS` as `True`, however, note that it is `False` by default.
+### Extras
 
-**NOTE** To have further information about how to develop Ansible operators with [Operator-SDK][operator_sdk] check the [Ansible User Guide for Operator-SDK][ansible-guide]
+This project was created by using the [gen-ansible-memcached.sh][gen-ansible-memcached.sh] script.
 
-### Testing the Operator
+For mor information see the [Ansible-based operator docs][ansible-docs].
 
-See [Testing Ansible Operators with Molecule][ansible-test-guide] documentation to know how to use the operator framework features to test it.  
-
-[python]: https://www.python.org/
-[ansible]: https://www.ansible.com/
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
-[operator_sdk]: https://github.com/operator-framework/operator-sdk
 [operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
-[ansible-test-guide]: https://sdk.operatorframework.io/docs/ansible/testing-guide/
-[ansible-guide]: https://sdk.operatorframework.io/docs/ansible/quickstart/
+[ansible-docs]: https://sdk.operatorframework.io/docs/building-operators/ansible/
+[gen-ansible-memcached.sh]: .generate/gen-helm-memcached.sh
