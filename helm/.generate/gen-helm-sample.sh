@@ -36,16 +36,16 @@ function header_text {
 
 function gen_helm_sample {
   header_text "starting to generate the sample ..."
-  dir=$(pwd)
   operIMG="quay.io/example-inc/memcached-operator:v0.0.1"
   bundleIMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
 
   header_text "removing memcached-operator ..."
-  rm -rf "$dir/memcached-operator"
+  cd ..
+  rm -rf "memcached-operator"
 
   header_text "creating memcached-operator  ..."
-  mkdir -p "$dir/memcached-operator"
-  cd "$dir/memcached-operator"
+  mkdir -p "memcached-operator"
+  cd "memcached-operator"
   operator-sdk init --plugins=helm --domain=example.com
   operator-sdk create api --version=v1alpha1 --group=cache --kind=Memcached  --helm-chart=stable/memcached
 
@@ -55,8 +55,8 @@ function gen_helm_sample {
   sed -i".bak" -E -e 's/AntiAffinity: hard/AntiAffinity: soft/g' config/samples/cache_v1alpha1_memcached.yaml; rm -f config/samples/cache_v1alpha1_memcached.yaml.bak
 
   header_text "adding policy rbac roles ..."
-  sed -i".bak" -E -e '/kubebuilder/d' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
-  cat ../policy-role.yaml >> config/rbac/role.yaml
+  sed -i".bak" -E -e '/kubebuilder:scaffold:rules/d' config/rbac/role.yaml; rm -f config/rbac/role.yaml.bak
+  cat ../.generate/policy-role.yaml >> config/rbac/role.yaml
 
   header_text "enabling prometheus metrics..."
   sed -i".bak" -E -e 's/(#- ..\/prometheus)/- ..\/prometheus/g' config/default/kustomization.yaml; rm -f config/default/kustomization.yaml.bak
@@ -65,16 +65,9 @@ function gen_helm_sample {
   header_text "customize bundle target into Makefile to set --interactive=false ..."
   sed -i".bak" -E -e 's/operator-sdk generate kustomize manifests/operator-sdk generate kustomize manifests --interactive=false/g' Makefile; rm -f Makefile.bak
 
-
   header_text "generating bundle and building the image $bundleIMG ..."
   make bundle IMG=$bundleIMG
   make bundle-build BUNDLE_IMG=$bundleIMG
-
-  header_text "adding packagemanifests target to the Makefile ..."
-  cat ../packagemanifests-target.txt >> Makefile
-
-  header_text "generating packagemanifests for the image $operIMG..."
-  make packagemanifests IMG=$operIMG
 }
 
 gen_helm_sample

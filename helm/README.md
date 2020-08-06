@@ -114,4 +114,4 @@ Note that you must have Helm installed locally and add the stable helm charts re
 [helm_guide]: https://sdk.operatorframework.io/docs/helm/quickstart/
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [helm-quick]: https://helm.sh/docs/intro/quickstart/
-[gen-helm-sample.sh]: gen-helm-sample.sh
+[gen-helm-sample.sh]: .generate/gen-helm-sample.sh
