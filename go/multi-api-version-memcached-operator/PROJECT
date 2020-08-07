@@ -1,0 +1,14 @@
+domain: example.com
+layout: go.kubebuilder.io/v2.0.0
+repo: github.com/example-inc/memcached-operator
+multigroup: true
+resources:
+- group: cache
+  kind: Memcached
+  version: v1alpha1
+- group: cache
+  kind: Memcached
+  version: v1alpha2
+version: 3-alpha
+plugins:
+  go.operator-sdk.io/v2.0.0: {}

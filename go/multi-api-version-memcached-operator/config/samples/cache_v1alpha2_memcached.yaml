@@ -1,0 +1,12 @@
+apiVersion: cache.example.com/v1alpha2
+kind: Memcached
+metadata:
+  name: memcached-sample
+spec:
+  # Add fields here
+  size: 3
+  price:
+    amount: 900
+    currency: "USD"
+    schedule:
+      minute: "*/1"
