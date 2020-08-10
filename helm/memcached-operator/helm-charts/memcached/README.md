@@ -2,7 +2,7 @@
 
 > [Memcached](https://memcached.org/) is an in-memory key-value store for small chunks of arbitrary data (strings, objects) from results of database calls, API calls, or page rendering.
 
-Based on the [memcached](https://github.com/helm/charts/tree/master/stable/memcached) chart from the [Helm Charts](https://github.com/helm/charts) repository.
+Based on the Bitnami [memcached chart](https://github.com/bitnami/charts/tree/master/bitnami/memcached).
 
 ## TL;DR;
 
