@@ -11,8 +11,6 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-.PHONY: bundle
-
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 
@@ -71,8 +69,8 @@ ifeq (, $(shell which helm-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p bin ;\
-	curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.0.0-alpha.2/helm-operator-v1.0.0-alpha.2-$(ARCHOPER)-$(OSOPER) ;\
-	mv helm-operator-v1.0.0-alpha.2-$(ARCHOPER)-$(OSOPER) ./bin/helm-operator ;\
+	curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.0.0/helm-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ;\
+	mv helm-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ./bin/helm-operator ;\
 	chmod +x ./bin/helm-operator ;\
 	}
 HELM_OPERATOR=$(realpath ./bin/helm-operator)
@@ -81,6 +79,7 @@ HELM_OPERATOR=$(shell which helm-operator)
 endif
 
 # Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle
 bundle: kustomize
 	operator-sdk generate kustomize manifests --interactive=false -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
@@ -88,5 +87,6 @@ bundle: kustomize
 	operator-sdk bundle validate ./bundle
 
 # Build the bundle image.
+.PHONY: bundle-build
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
