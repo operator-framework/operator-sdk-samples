@@ -3,7 +3,7 @@ module github.com/operator-framework/operator-sdk-samples/go/memcached-operator
 go 1.13
 
 require (
-	github.com/operator-framework/operator-sdk v0.18.1
+	github.com/operator-framework/operator-sdk v0.19.2
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
