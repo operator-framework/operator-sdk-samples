@@ -26,7 +26,7 @@ $ cd operator-sdk-samples/helm/memcached-operator
 
 Build the Memcached operator image and push it to a public registry, such as quay.io:
 
-```
+```sh
 export IMAGE=quay.io/example-inc/memcached-operator:v0.0.1
 make docker-build docker-push IMG=$IMAGE
 ```
