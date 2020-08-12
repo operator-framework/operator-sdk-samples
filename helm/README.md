@@ -99,7 +99,7 @@ kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-
 
 ### Extras
 
-This project was created by using the [gen-helm-sample.sh][gen-helm-sample.sh] script , which means that it is using the official [stable/memcached][stable/memcached] helm chart.
+This project was created by using the [gen-helm-memcached.sh][gen-helm-memcached.sh] script , which means that it is using the official [stable/memcached][stable/memcached] helm chart.
 
 Note that you must have Helm installed locally and add the stable helm charts repo to it to use the `stable/memcached` Helm charts. See the [Helm Quickstart guide][helm-quick] for installation instructions.
 
@@ -109,4 +109,4 @@ Note that you must have Helm installed locally and add the stable helm charts re
 [helm_guide]: https://sdk.operatorframework.io/docs/helm/quickstart/
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [helm-quick]: https://helm.sh/docs/intro/quickstart/
-[gen-helm-memcached.sh]: .generate/gen-helm-sample.sh
+[gen-helm-memcached.sh]: .generate/gen-helm-memcached.sh
