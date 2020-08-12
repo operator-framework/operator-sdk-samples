@@ -61,12 +61,15 @@ function gen_helm_sample {
   header_text "enabling prometheus metrics..."
   sed -i".bak" -E -e 's/(#- ..\/prometheus)/- ..\/prometheus/g' config/default/kustomization.yaml; rm -f config/default/kustomization.yaml.bak
 
+  header_text "bulding the project ..."
+  make docker-build IMG=$operIMG
+
   header_text "integrating with OLM ..."
   header_text "customize bundle target into Makefile to set --interactive=false ..."
   sed -i".bak" -E -e 's/operator-sdk generate kustomize manifests/operator-sdk generate kustomize manifests --interactive=false/g' Makefile; rm -f Makefile.bak
 
   header_text "generating bundle and building the image $bundleIMG ..."
-  make bundle IMG=$bundleIMG
+  make bundle IMG=$operIMG
   make bundle-build BUNDLE_IMG=$bundleIMG
 }
 
