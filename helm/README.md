@@ -39,7 +39,6 @@ make docker-build docker-push IMG=$IMAGE
 Install the CRD and deploy the project to the cluster. Set IMG with make deploy to use the image you just pushed:
 
 ```
-make install
 make deploy IMG=$IMAGE
 ```
 
