@@ -38,7 +38,7 @@ make docker-build docker-push IMG=$IMAGE
 
 Deploy the project to the cluster. Set `IMG` with `make deploy` to use the image you just pushed:
 
-```
+```sh
 make deploy IMG=$IMAGE
 ```
 
@@ -53,7 +53,7 @@ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-opera
 Run the following command to verify that the installation was successful:
 
 ```console
-kubectl get all -n memcached-operator-system
+$ kubectl get all -n memcached-operator-system
 NAME                                                        READY   STATUS    RESTARTS   AGE
 pod/memcached-operator-controller-manager-d54b5fb78-ltwqs   2/2     Running   0          2m16s
 pod/memcached-sample-0                                      1/1     Running   0          96s
