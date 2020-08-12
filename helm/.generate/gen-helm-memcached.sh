@@ -66,7 +66,6 @@ function gen_helm_sample {
   make docker-build IMG=$operIMG
 
   header_text "integrating with OLM ..."
-  header_text "customize bundle target into Makefile to set --interactive=false ..."
   sed -i".bak" -E -e 's/operator-sdk generate kustomize manifests/operator-sdk generate kustomize manifests --interactive=false/g' Makefile; rm -f Makefile.bak
 
   header_text "generating bundle and building the image $bundleIMG ..."
