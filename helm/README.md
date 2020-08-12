@@ -17,9 +17,9 @@ This Memcached operator is a simple example of the Operator SDK Helm-based opera
 
 Checkout this Memcached operator repository
 
-```
-$ git clone https://github.com/operator-framework/operator-sdk-samples.git
-$ cd operator-sdk-samples/helm/memcached-operator
+```sh
+git clone https://github.com/operator-framework/operator-sdk-samples.git
+cd operator-sdk-samples/helm/memcached-operator
 ```
 
 ### Build the operator image
