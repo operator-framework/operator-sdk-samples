@@ -1,5 +1,3 @@
----
-# tasks file for Memcached
 # Update file in operator-sdk-samples/ansible/generate/role_main.yml
 - name: start memcached
   community.kubernetes.k8s:

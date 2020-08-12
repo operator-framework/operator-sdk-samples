@@ -1,3 +1,0 @@
----
-- import_playbook: ../default/prepare.yml
-- import_playbook: ../cluster/prepare.yml
