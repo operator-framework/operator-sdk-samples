@@ -35,9 +35,10 @@ function header_text {
 }
 
 function gen_helm_sample {
+  local operIMG="quay.io/example-inc/memcached-operator:v0.0.1"
+  local bundleIMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
+  
   header_text "starting to generate the sample ..."
-  operIMG="quay.io/example-inc/memcached-operator:v0.0.1"
-  bundleIMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
 
   header_text "removing memcached-operator ..."
   cd ..
