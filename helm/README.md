@@ -93,7 +93,7 @@ make undeploy
 
 Run the following command to check the operator logs.
 
-```shell
+```sh
 kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
 
