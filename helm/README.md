@@ -100,13 +100,11 @@ Run the following command to check the operator logs.
 kubectl logs deployment.apps/memcached-operator-controller-manager -n memcached-operator-system -c manager
 ```
 
-**NOTE** For further information about how to develop Helm operators with Operator SDK, read the [Helm User Guide for Operator SDK][helm_guide]
-
 ### Extras
 
 This project was created by using the [gen-helm-sample.sh][gen-helm-sample.sh] script , which means that it is using the official [stable/memcached][stable/memcached] helm chart.
 
-Note that you must have Helm installed locally and add the stable helm charts repo to it to use the `stable/memcached` Helm charts. See the [Helm Quick Start guide][helm-quick] for installation instructions.
+Note that you must have Helm installed locally and add the stable helm charts repo to it to use the `stable/memcached` Helm charts. See the [Helm Quickstart guide][helm-quick] for installation instructions.
 
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
@@ -114,4 +112,4 @@ Note that you must have Helm installed locally and add the stable helm charts re
 [helm_guide]: https://sdk.operatorframework.io/docs/helm/quickstart/
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [helm-quick]: https://helm.sh/docs/intro/quickstart/
-[gen-helm-sample.sh]: .generate/gen-helm-sample.sh
+[gen-helm-memcached.sh]: .generate/gen-helm-sample.sh
