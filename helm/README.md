@@ -53,7 +53,7 @@ kubectl apply -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-opera
 Run the following command to verify that the installation was successful:
 
 ```sh
-$ kubectl get all -n memcached-operator-system
+kubectl get all -n memcached-operator-system
 NAME                                                        READY   STATUS    RESTARTS   AGE
 pod/memcached-operator-controller-manager-d54b5fb78-ltwqs   2/2     Running   0          2m16s
 pod/memcached-sample-0                                      1/1     Running   0          96s
