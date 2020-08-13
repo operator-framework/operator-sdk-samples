@@ -2,7 +2,7 @@
 
 > [Memcached](https://memcached.org/) is an in-memory key-value store for small chunks of arbitrary data (strings, objects) from results of database calls, API calls, or page rendering.
 
-Based on the Bitnami [memcached chart](https://github.com/bitnami/charts/tree/master/bitnami/memcached).
+Based on the [memcached](https://github.com/bitnami/charts/tree/master/incubator/memcached) chart from the [Bitnami Charts](https://github.com/bitnami/charts) repository.
 
 ## TL;DR;
 
@@ -47,7 +47,9 @@ The following table lists the configurable parameters of the Memcached chart and
 | `memcached.verbosity`      | Verbosity level (v, vv, or vvv) | Un-set.                                                 |
 | `memcached.maxItemMemory`  | Max memory for items (in MB)    | `64`                                                    |
 | `memcached.extraArgs`      | Additional memcached arguments  | `[]`                                                    |
-| `metrics.enabled`          | Expose metrics in prometheus format | false                                               |             
+| `metrics.enabled`          | Expose metrics in prometheus format | false                                               |
+| `metrics.serviceMonitor.enabled`          | Expose serviceMonitor to be scraped in prometheus-operator target | false                                               |
+| `metrics.serviceMonitor.interval`          | Default frequency to scrap metrics | 15s                                               |
 | `metrics.image`            | The image to pull and run for the metrics exporter | A recent official memcached tag      |
 | `metrics.imagePullPolicy`  | Image pull policy               | `Always` if `imageTag` is `latest`, else `IfNotPresent` |
 | `metrics.resources`        | CPU/Memory resource requests/limits for the metrics exporter | `{}`                       |
@@ -127,3 +129,19 @@ spec:
 ```
 
 Once you've done this, you can upgrade to 3.x with Helm as normal.
+
+If you want prometheus-operator scrap all serviceMonitors in your cluster you need to set:
+```yaml
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+```
+If you want to be specific:
+```yaml
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        app: memcached
+```
+You can have more intel in prometheus-operator values and here [github](https://github.com/helm/charts/issues/11310#issuecomment-463486706)

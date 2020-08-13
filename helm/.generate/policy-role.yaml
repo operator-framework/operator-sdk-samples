@@ -1,0 +1,19 @@
+##
+## Rules customized for cache.example.com/v1alpha1, Kind: Memcached
+##
+- apiGroups:
+    - policy
+  resources:
+    - events
+    - poddisruptionbudgets
+  verbs:
+    - '*'
+- apiGroups:
+    - ""
+  resources:
+    - serviceaccounts
+    - services
+  verbs:
+    - '*'
+
+# +kubebuilder:scaffold:rules

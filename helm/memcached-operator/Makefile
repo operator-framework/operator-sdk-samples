@@ -1,37 +1,92 @@
-.DEFAULT_GOAL:=help
-SHELL:=/bin/bash
-NAMESPACE=helm-memcached
+# Current Operator version
+VERSION ?= 0.0.1
+# Default bundle image tag
+BUNDLE_IMG ?= controller-bundle:$(VERSION)
+# Options for 'bundle-build'
+ifneq ($(origin CHANNELS), undefined)
+BUNDLE_CHANNELS := --channels=$(CHANNELS)
+endif
+ifneq ($(origin DEFAULT_CHANNEL), undefined)
+BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
+endif
+BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-##@ Application
+# Image URL to use all building/pushing image targets
+IMG ?= controller:latest
 
-install: ## Install all resources (CR/CRD's, RBAC and Operator)
-	@echo ....... Creating namespace ....... 
-	- kubectl create namespace ${NAMESPACE}
-	@echo ....... Applying CRDs and Operator .......
-	- kubectl apply -f deploy/crds/cache.example.com_memcacheds_crd.yaml -n ${NAMESPACE}
-	@echo ....... Applying Rules and Service Account .......
-	- kubectl apply -f deploy/role.yaml -n ${NAMESPACE}
-	- kubectl apply -f deploy/role_binding.yaml  -n ${NAMESPACE}
-	- kubectl apply -f deploy/service_account.yaml  -n ${NAMESPACE}
-	@echo ....... Applying Operator .......
-	- kubectl apply -f deploy/operator.yaml -n ${NAMESPACE}
-	@echo ....... Creating the Memcached Instance .......
-	- kubectl apply -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml -n ${NAMESPACE}
+all: docker-build
 
-uninstall: ## Uninstall all that all performed in the $ make install
-	@echo ....... Uninstalling .......
-	@echo ....... Deleting CR and CRD.......
-	- kubectl delete -f deploy/crds/cache.example.com_v1alpha1_memcached_cr.yaml -n ${NAMESPACE}
-	- kubectl delete -f deploy/crds/cache.example.com_memcacheds_crd.yaml -n ${NAMESPACE}
-	@echo ....... Deleting Rules and Service Account .......
-	- kubectl delete -f deploy/role.yaml -n ${NAMESPACE}
-	- kubectl delete -f deploy/role_binding.yaml -n ${NAMESPACE}
-	- kubectl delete -f deploy/service_account.yaml -n ${NAMESPACE}
-	@echo ....... Deleting Operator .......
-	- kubectl delete -f deploy/operator.yaml -n ${NAMESPACE}
-	@echo ....... Deleting namespace ${NAMESPACE}.......
-	- kubectl delete namespace ${NAMESPACE}
+# Run against the configured Kubernetes cluster in ~/.kube/config
+run: helm-operator
+	$(HELM_OPERATOR) run
 
-.PHONY: help
-help:  ## Display this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+# Install CRDs into a cluster
+install: kustomize
+	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+
+# Uninstall CRDs from a cluster
+uninstall: kustomize
+	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+
+# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+deploy: kustomize
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
+
+# Undeploy controller in the configured Kubernetes cluster in ~/.kube/config
+undeploy: kustomize
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+# Build the docker image
+docker-build:
+	docker build . -t ${IMG}
+
+# Push the docker image
+docker-push:
+	docker push ${IMG}
+
+PATH  := $(PATH):$(PWD)/bin
+SHELL := env PATH=$(PATH) /bin/sh
+OS    = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH  = $(shell uname -m | sed 's/x86_64/amd64/')
+OSOPER   = $(shell uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/apple-darwin/' | sed 's/linux/linux-gnu/')
+ARCHOPER = $(shell uname -m )
+
+kustomize:
+ifeq (, $(shell which kustomize 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p bin ;\
+	curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v3.5.4/kustomize_v3.5.4_$(OS)_$(ARCH).tar.gz | tar xzf - -C bin/ ;\
+	}
+KUSTOMIZE=$(realpath ./bin/kustomize)
+else
+KUSTOMIZE=$(shell which kustomize)
+endif
+
+helm-operator:
+ifeq (, $(shell which helm-operator 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p bin ;\
+	curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.0.0/helm-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ;\
+	mv helm-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ./bin/helm-operator ;\
+	chmod +x ./bin/helm-operator ;\
+	}
+HELM_OPERATOR=$(realpath ./bin/helm-operator)
+else
+HELM_OPERATOR=$(shell which helm-operator)
+endif
+
+# Generate bundle manifests and metadata, then validate generated files.
+.PHONY: bundle
+bundle: kustomize
+	operator-sdk generate kustomize manifests --interactive=false -q
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
+
+# Build the bundle image.
+.PHONY: bundle-build
+bundle-build:
+	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
