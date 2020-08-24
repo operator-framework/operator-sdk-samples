@@ -77,10 +77,10 @@ statefulset.apps/memcached-sample   3/3     96s
 ### Clean up
 
 Delete the CR to uninstall the release:
-`
+
 ```sh
 kubectl delete -f config/samples/cache_v1alpha1_memcached.yaml -n memcached-operator-system
-````
+```
 
 Use `make uninstall` and `make undeploy` to uninstall the operator and its CRDs:
 
