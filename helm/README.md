@@ -22,6 +22,10 @@ git clone https://github.com/operator-framework/operator-sdk-samples.git
 cd operator-sdk-samples/helm/memcached-operator
 ```
 
+### Install dependencies
+
+As this example uses a `ServiceMonitor`, please follow [this][prometheus_install] guide to install Prometheus Operator into the cluster prior to deployment.
+
 ### Build the operator image
 
 Build the Memcached operator image and push it to a public registry, such as quay.io:
@@ -32,7 +36,6 @@ make docker-build docker-push IMG=$IMAGE
 ```
 
 **NOTE** To allow the cluster pull the image the repository needs to be set as public or you must configure an image pull secret.
-
 
 ### Run the operator
 
@@ -106,6 +109,7 @@ Note that you must have Helm installed locally and add the stable helm charts re
 [kubectl_tool]: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 [docker_tool]: https://docs.docker.com/install/
 [operator_install]: https://sdk.operatorframework.io/docs/install-operator-sdk/
+[prometheus_install]: https://github.com/prometheus-operator/prometheus-operator#quickstart
 [helm_guide]: https://sdk.operatorframework.io/docs/helm/quickstart/
 [stable/memcached]: https://github.com/helm/charts/tree/master/stable/memcached
 [helm-quick]: https://helm.sh/docs/intro/quickstart/
