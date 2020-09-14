@@ -6,4 +6,4 @@ RUN ansible-galaxy collection install -r ${HOME}/requirements.yml \
 
 COPY watches.yaml ${HOME}/watches.yaml
 COPY roles/ ${HOME}/roles/
-COPY playbooks/ ${HOME}/playbooks/
+COPY memcached.yml ${HOME}/memcached.yml
