@@ -1,6 +1,6 @@
 # [DEPRECATED] Operator SDK Samples
 
-This project is deprecated. The samples for the Operator Framework has moved to the `testdata` directory in https://github.com/operator-framework/operator-sdk/. More info see the [EP: Automatic Samples Generation using Go language](https://github.com/operator-framework/enhancements/blob/master/enhancements/samples-generation.md) 
+This repository has been deprecated. The sample operator projects have been moved to `testdata/` in [Operator SDK][https://github.com/operator-framework/operator-sdk/] repository. For more info see the [enhancement proposal][https://github.com/operator-framework/enhancements/blob/master/enhancements/samples-generation.md] for automatic sample generation using Go.  
 
 This project is a component of the [Operator Framework](https://github.com/operator-framework), an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post](https://coreos.com/blog/introducing-operator-framework).
 
