@@ -34,19 +34,17 @@ function header_text {
   echo "$header$*$reset"
 }
 
-RELEASE_VERSION=v1.0.0
+#  NOTE: The script will use the bin installed locally
+#  Ensure that you have the version required with `operator-sdk version`
 
-function install_bin() {
-	local url="https://github.com/operator-framework/operator-sdk/releases/download/${2}/${1}-${2}-x86_64-linux-gnu"
-	curl -sSLo $1 $url
-	chmod +x $1
-	...
-}
+ROOTDIR="$(pwd)"
+cd ../go/.generate/
+./gen-go-sample.sh
 
-install_bin operator-sdk $RELEASE_VERSION
-install_bin helm-operator $RELEASE_VERSION
-install_bin ansible-operator $RELEASE_VERSION
+cd $ROOTDIR
+cd ../helm/.generate/
+./gen-helm-memcached.sh
 
-../go/.generate/gen-go-sample.sh
-../helm/.generate/gen-helm-memcached.sh
-../ansible/.generate/gen-ansible-memcached.sh
+cd $ROOTDIR
+cd ../ansible/.generate/
+./gen-ansible-memcached.sh

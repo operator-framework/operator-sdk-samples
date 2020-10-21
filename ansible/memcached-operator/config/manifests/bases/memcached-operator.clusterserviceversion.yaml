@@ -5,18 +5,12 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.1.0
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+    operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
   name: memcached-operator.vX.Y.Z
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions:
-    owned:
-    - description: Memcached is the Schema for the memcacheds API
-      displayName: Memcached
-      kind: Memcached
-      name: memcacheds.cache.example.com
-      version: v1alpha1
+  customresourcedefinitions: {}
   description: Memcached Operator description. TODO.
   displayName: Memcached Operator
   icon:

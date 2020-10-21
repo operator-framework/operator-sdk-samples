@@ -272,6 +272,7 @@ function update_Makefile() {
 function scaffold_go_project() {
 
     header_text "Removing the existing example project"
+    cd ..
     rm -rf memcached-operator
 
     header_text "Creating project directory"
