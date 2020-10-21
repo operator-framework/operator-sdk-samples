@@ -37,7 +37,9 @@ function header_text {
 RELEASE_VERSION=v1.0.0
 
 function install_bin() {
-	local url="https://github.com/operator-framework/operator-sdk/releases/download/${2}/${1}-${2}-x86_64-linux-gnu"
+  OS=$(shell uname -s | tr '[:upper:]' '[:lower:]')
+  ARCH=$(shell uname -m | sed 's/x86_64/amd64/')
+	local url="https://github.com/operator-framework/operator-sdk/releases/download/${2}/${1}-${2}-${ARCH}-${OS}"
 	curl -sSLo $1 $url
 	chmod +x $1
 	...
