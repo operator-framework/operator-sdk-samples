@@ -69,8 +69,8 @@ ifeq (, $(shell which ansible-operator 2>/dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p bin ;\
-	curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.0.0/ansible-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ;\
-	mv ansible-operator-v1.0.0-$(ARCHOPER)-$(OSOPER) ./bin/ansible-operator ;\
+	curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.1.0/ansible-operator-v1.1.0-$(ARCHOPER)-$(OSOPER) ;\
+	mv ansible-operator-v1.1.0-$(ARCHOPER)-$(OSOPER) ./bin/ansible-operator ;\
 	chmod +x ./bin/ansible-operator ;\
 	}
 ANSIBLE_OPERATOR=$(realpath ./bin/ansible-operator)
@@ -81,7 +81,7 @@ endif
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
 bundle: kustomize
-	operator-sdk generate kustomize manifests -q
+	operator-sdk generate kustomize manifests --interactive=false -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle

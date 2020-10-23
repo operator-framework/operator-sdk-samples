@@ -4,7 +4,10 @@ This repository has been deprecated. The sample operator projects have been move
 
 This project is a component of the [Operator Framework](https://github.com/operator-framework), an open source toolkit to manage Kubernetes native applications, called Operators, in an effective, automated, and scalable way. Read more in the [introduction blog post](https://coreos.com/blog/introducing-operator-framework).
 
+Note that, the latest SDK released version used to update the samples is 1.1.0. 
+
 ## Overview
+
 This repo contains samples of operators built using the [operator-sdk][operator_sdk].
 
 To view operators which leverage Go, Ansible, or Helm for deployment, see the [Go][go_examples], [Ansible][ansible_examples], or [Helm][helm_examples] samples sections, respectively.

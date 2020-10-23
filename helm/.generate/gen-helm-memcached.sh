@@ -30,6 +30,7 @@ else
   reset=''
 fi
 
+operatorName="memcached-operator"
 function header_text {
   echo "$header$*$reset"
 }
@@ -42,11 +43,14 @@ function gen_helm_sample {
 
   header_text "removing memcached-operator ..."
   cd ..
-  rm -rf "memcached-operator"
+  rm -rf $operatorName
+
+  header_text "creating $operatorName"
+
 
   header_text "creating memcached-operator  ..."
-  mkdir -p "memcached-operator"
-  cd "memcached-operator"
+  mkdir $operatorName
+  cd $operatorName
   operator-sdk init --plugins=helm --domain=example.com
   operator-sdk create api --version=v1alpha1 --group=cache --kind=Memcached  --helm-chart=stable/memcached
 

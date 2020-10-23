@@ -16,7 +16,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    operators.operatorframework.io/builder: operator-sdk-v1.0.0
+    operators.operatorframework.io/builder: operator-sdk-v1.1.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
   name: memcached-operator.v0.0.1
   namespace: placeholder
@@ -175,9 +175,9 @@ spec:
         serviceAccountName: default
     strategy: deployment
   installModes:
-  - supported: true
+  - supported: false
     type: OwnNamespace
-  - supported: true
+  - supported: false
     type: SingleNamespace
   - supported: false
     type: MultiNamespace
@@ -197,8 +197,9 @@ spec:
     url: https://your.domain
   version: 0.0.1
   webhookdefinitions:
-  - admissionReviewVersions: null
-    deploymentName: memcached-operator-webhook
+  - admissionReviewVersions:
+    - v1beta1
+    deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: vmemcached.kb.io
     rules:
@@ -211,11 +212,12 @@ spec:
       - UPDATE
       resources:
       - memcacheds
-    sideEffects: null
+    sideEffects: None
     type: ValidatingAdmissionWebhook
     webhookPath: /validate-cache-example-com-v1alpha1-memcached
-  - admissionReviewVersions: null
-    deploymentName: memcached-operator-webhook
+  - admissionReviewVersions:
+    - v1beta1
+    deploymentName: memcached-operator-controller-manager
     failurePolicy: Fail
     generateName: mmemcached.kb.io
     rules:
@@ -228,6 +230,6 @@ spec:
       - UPDATE
       resources:
       - memcacheds
-    sideEffects: null
+    sideEffects: None
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-cache-example-com-v1alpha1-memcached
