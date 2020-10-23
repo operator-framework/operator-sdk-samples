@@ -11,22 +11,20 @@ metadata:
             "name": "memcached-sample"
           },
           "spec": {
-            "size": 3
+            "size": 1
           }
         }
       ]
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.1.0
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+    operators.operatorframework.io/project_layout: ansible.sdk.operatorframework.io/v1
   name: memcached-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: Memcached is the Schema for the memcacheds API
-      displayName: Memcached
-      kind: Memcached
+    - kind: Memcached
       name: memcacheds.cache.example.com
       version: v1alpha1
   description: Memcached Operator description. TODO.
@@ -39,9 +37,27 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
+          - ""
+          resources:
+          - secrets
+          - pods
+          - pods/exec
+          - pods/log
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - apps
           resources:
           - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
           verbs:
           - create
           - delete
@@ -54,6 +70,8 @@ spec:
           - cache.example.com
           resources:
           - memcacheds
+          - memcacheds/status
+          - memcacheds/finalizers
           verbs:
           - create
           - delete
@@ -62,21 +80,6 @@ spec:
           - patch
           - update
           - watch
-        - apiGroups:
-          - cache.example.com
-          resources:
-          - memcacheds/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-          - list
         - apiGroups:
           - authentication.k8s.io
           resources:
@@ -118,31 +121,14 @@ spec:
               - args:
                 - --metrics-addr=127.0.0.1:8080
                 - --enable-leader-election
-                command:
-                - /manager
-                image: controller:latest
+                - --leader-election-id=memcached-operator
+                env:
+                - name: ANSIBLE_GATHERING
+                  value: explicit
+                image: quay.io/example-inc/memcached-operator:v0.0.1
                 name: manager
-                ports:
-                - containerPort: 9443
-                  name: webhook-server
-                  protocol: TCP
-                resources:
-                  limits:
-                    cpu: 100m
-                    memory: 30Mi
-                  requests:
-                    cpu: 100m
-                    memory: 20Mi
-                volumeMounts:
-                - mountPath: /tmp/k8s-webhook-server/serving-certs
-                  name: cert
-                  readOnly: true
+                resources: {}
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: cert
-                secret:
-                  defaultMode: 420
-                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -157,14 +143,6 @@ spec:
           - update
           - patch
           - delete
-        - apiGroups:
-          - ""
-          resources:
-          - configmaps/status
-          verbs:
-          - get
-          - update
-          - patch
         - apiGroups:
           - ""
           resources:
@@ -196,40 +174,3 @@ spec:
     name: Provider Name
     url: https://your.domain
   version: 0.0.1
-  webhookdefinitions:
-  - admissionReviewVersions:
-    - v1beta1
-    deploymentName: memcached-operator-controller-manager
-    failurePolicy: Fail
-    generateName: vmemcached.kb.io
-    rules:
-    - apiGroups:
-      - cache.example.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - memcacheds
-    sideEffects: None
-    type: ValidatingAdmissionWebhook
-    webhookPath: /validate-cache-example-com-v1alpha1-memcached
-  - admissionReviewVersions:
-    - v1beta1
-    deploymentName: memcached-operator-controller-manager
-    failurePolicy: Fail
-    generateName: mmemcached.kb.io
-    rules:
-    - apiGroups:
-      - cache.example.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - memcacheds
-    sideEffects: None
-    type: MutatingAdmissionWebhook
-    webhookPath: /mutate-cache-example-com-v1alpha1-memcached

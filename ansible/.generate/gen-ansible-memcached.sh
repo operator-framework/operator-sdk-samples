@@ -51,6 +51,7 @@ function gen_ansible_memcached {
   cp size_podcount_test.yml ../$operatorName/molecule/default/tasks/size_podcount_test.yml
 
   header_text "bulding the project ..."
+  cd ../$operatorName/
   make docker-build IMG=$operIMG
 
   header_text "integrating with OLM ..."
@@ -62,3 +63,4 @@ function gen_ansible_memcached {
 }
 
 gen_ansible_memcached
+

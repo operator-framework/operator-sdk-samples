@@ -34,7 +34,7 @@ function header_text {
   echo "$header$*$reset"
 }
 
-RELEASE_VERSION=v1.0.0
+RELEASE_VERSION=v1.1.0
 
 function install_bin() {
   OS=$(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -49,6 +49,14 @@ install_bin operator-sdk $RELEASE_VERSION
 install_bin helm-operator $RELEASE_VERSION
 install_bin ansible-operator $RELEASE_VERSION
 
-../go/.generate/gen-go-sample.sh
-../helm/.generate/gen-helm-memcached.sh
-../ansible/.generate/gen-ansible-memcached.sh
+ROOTDIR="$(pwd)"
+cd ../go/.generate/
+./gen-go-sample.sh
+
+cd $ROOTDIR
+cd ../helm/.generate/
+./gen-helm-memcached.sh
+
+cd $ROOTDIR
+cd ../ansible/.generate/
+./gen-ansible-memcached.sh
