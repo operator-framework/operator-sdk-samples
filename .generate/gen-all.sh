@@ -30,26 +30,57 @@ else
   reset=''
 fi
 
+#===================================================================
+# FUNCTION trap_add ()
+#
+# Purpose:  prepends a command to a trap
+#
+# - 1st arg:  code to add
+# - remaining args:  names of traps to modify
+#
+# Example:  trap_add 'echo "in trap DEBUG"' DEBUG
+#
+# See: http://stackoverflow.com/questions/3338030/multiple-bash-traps-for-the-same-signal
+#===================================================================
+
+function trap_add() {
+    trap_add_cmd=$1; shift || fatal "${FUNCNAME} usage error"
+    new_cmd=
+    for trap_add_name in "$@"; do
+        # Grab the currently defined trap commands for this trap
+        existing_cmd=`trap -p "${trap_add_name}" |  awk -F"'" '{print $2}'`        # Define default command
+        [ -z "${existing_cmd}" ] && existing_cmd="echo exiting @ `date`"        # Generate the new command
+        new_cmd="${trap_add_cmd};${existing_cmd}"        # Assign the test
+         trap   "${new_cmd}" "${trap_add_name}" || \
+                fatal "unable to add to trap ${trap_add_name}"
+    done
+}
 function header_text {
   echo "$header$*$reset"
 }
-
+# edit the release version before execute the script
 RELEASE_VERSION=v1.1.0
-
 function install_bin() {
-  OS=$(shell uname -s | tr '[:upper:]' '[:lower:]')
-  ARCH=$(shell uname -m | sed 's/x86_64/amd64/')
-	local url="https://github.com/operator-framework/operator-sdk/releases/download/${2}/${1}-${2}-${ARCH}-${OS}"
-	curl -sSLo $1 $url
-	chmod +x $1
-	...
+  header_text "installing the SDK version ${RELEASE_VERSION}"
+  TMPDIR="$(mktemp -d)"
+  trap_add 'rm -rf $TMPDIR' EXIT
+  pushd "$TMPDIR"
+  git clone https://github.com/operator-framework/operator-sdk
+  cd operator-sdk
+  git checkout ${RELEASE_VERSION}
+  git checkout -b generate-release-${RELEASE_VERSION}
+  make tidy
+  make install
+  operator-sdk version
 }
 
-install_bin operator-sdk $RELEASE_VERSION
-install_bin helm-operator $RELEASE_VERSION
-install_bin ansible-operator $RELEASE_VERSION
-
 ROOTDIR="$(pwd)"
+
+install_bin
+
+header_text "updating samples"
+
+cd $ROOTDIR
 cd ../go/.generate/
 ./gen-go-sample.sh
 
