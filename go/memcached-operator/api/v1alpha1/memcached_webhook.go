@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-    "errors"
+	"errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,8 +43,8 @@ var _ webhook.Defaulter = &Memcached{}
 func (r *Memcached) Default() {
 	memcachedlog.Info("default", "name", r.Name)
 
-	 if r.Spec.Size == 0 { 
-		r.Spec.Size = 3 
+	if r.Spec.Size == 0 {
+		r.Spec.Size = 3
 	}
 }
 
@@ -57,25 +57,25 @@ var _ webhook.Validator = &Memcached{}
 func (r *Memcached) ValidateCreate() error {
 	memcachedlog.Info("validate create", "name", r.Name)
 
-	 return validateOdd(r.Spec.Size)
+	return validateOdd(r.Spec.Size)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateUpdate(old runtime.Object) error {
 	memcachedlog.Info("validate update", "name", r.Name)
 
-	 return validateOdd(r.Spec.Size)
+	return validateOdd(r.Spec.Size)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Memcached) ValidateDelete() error {
 	memcachedlog.Info("validate delete", "name", r.Name)
 
-	 return nil
+	return nil
 }
-func validateOdd(n int32) error { 
-	    if n%2 == 0 { 
-		    return errors.New("Cluster size must be an odd number") 
-	    } 
-	    return nil 
-    }
+func validateOdd(n int32) error {
+	if n%2 == 0 {
+		return errors.New("Cluster size must be an odd number")
+	}
+	return nil
+}
