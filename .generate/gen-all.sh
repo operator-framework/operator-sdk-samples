@@ -14,6 +14,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# Before run this script ensure that you have helm installed locally
+# with the stable repo as well. The helm sample will use the memcached chart
+# from helm repository.
+# To install: https://helm.sh/docs/intro/install/
+# To add the repo run `helm repo add stable https://charts.helm.sh/stable`
+
 set -o errexit
 set -o pipefail
 
