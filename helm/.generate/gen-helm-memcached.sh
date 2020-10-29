@@ -14,6 +14,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# Before run this script ensure that you have helm installed locally
+# with the stable repo as well. The helm sample will use the memcached chart
+# from helm repository.
+# To install: https://helm.sh/docs/intro/install/
+# To add the repo run `helm repo add stable https://charts.helm.sh/stable`
+
 set -o errexit
 set -o pipefail
 
@@ -36,6 +42,18 @@ function header_text {
 }
 
 function gen_helm_sample {
+
+  # When operator-sdk scaffolds Helm projects, it tries to use the discovery API of a Kubernetes
+	# cluster to intelligently build the RBAC rules that the operator will require based on the
+	# content of the helm chart.
+	#
+	# Here, we intentionally set KUBECONFIG to a broken value to ensure that operator-sdk will be
+	#  unable to reach a real cluster, and thus will generate a default RBAC rule set. This is
+	# required to make Helm project generation idempotent because contributors and CI environments
+	# can all have slightly different environments that can affect the content of the generated
+	# role and cause sanity testing to fail.
+  export KUBECONFIG="broken_so_we_generate_static_default_rules"
+
   local operIMG="quay.io/example-inc/memcached-operator:v0.0.1"
   local bundleIMG="quay.io/example-inc/memcached-operator-bundle:v0.0.1"
   
